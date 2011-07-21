@@ -54,7 +54,9 @@
 
 
 // older SDKs are missing these
-#ifndef TVN_ITEMCHANGINGA
+//#define TVN_ITEMCHANGINGA 1
+//#if ! defined TVN_ITEMCHANGINGA && !(_WIN32_IE > 0x0600)
+#if !(_WIN32_IE > 0x0600)
 
 #define TVN_ITEMCHANGINGA (TVN_FIRST-16)
 #define TVN_ITEMCHANGINGW (TVN_FIRST-17)

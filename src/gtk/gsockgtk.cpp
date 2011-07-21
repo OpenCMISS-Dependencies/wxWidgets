@@ -3,7 +3,7 @@
  * Name:    src/gtk/gsockgtk.cpp
  * Purpose: GSocket: GTK part
  * Licence: The wxWindows licence
- * CVSID:   $Id: gsockgtk.cpp 37159 2006-01-26 16:02:02Z ABX $
+ * CVSID:   $Id$
  * -------------------------------------------------------------------------
  */
 // For compilers that support precompilation, includes "wx.h".
@@ -15,8 +15,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// newer versions of glib define its own GSocket but we unfortunately use this
+// name in our own (semi-)public header and so can't change it -- rename glib
+// one instead
+#define GSocket GlibGSocket
 #include <gdk/gdk.h>
 #include <glib.h>
+#undef GSocket
 
 #include "wx/gsocket.h"
 #include "wx/unix/gsockunx.h"

@@ -188,7 +188,7 @@
 //
 // Recommended setting: depends on whether you intend to use C++ exceptions
 //                      in your own code (1 if you do, 0 if you don't)
-#define wxUSE_EXCEPTIONS    0
+#cmakedefine01 wxUSE_EXCEPTIONS
 
 // Set wxUSE_EXTENDED_RTTI to 1 to use extended RTTI
 //
@@ -244,7 +244,7 @@
 // Default is 1
 //
 // Recommended setting: 0 unless you do plan to develop MT applications
-#define wxUSE_THREADS 0
+#cmakedefine01 wxUSE_THREADS
 
 // If enabled, compiles wxWidgets streams classes
 //
@@ -429,7 +429,7 @@
 #define wxUSE_DYNLIB_CLASS    1
 
 // experimental, don't use for now
-#define wxUSE_DYNAMIC_LOADER  1
+#cmakedefine01 wxUSE_DYNAMIC_LOADER
 
 // Set to 1 to use socket classes
 #define wxUSE_SOCKETS       1
@@ -520,20 +520,20 @@
 //
 // Recommended setting: 1 if your compiler supports it, if it doesn't please
 // contribute us a makefile for src/regex for it
-#define wxUSE_REGEX       1
+#cmakedefine01 wxUSE_REGEX
 
 // wxSystemOptions class
 #define wxUSE_SYSTEM_OPTIONS 1
 
 // wxSound class
-#define wxUSE_SOUND      0
+#define wxUSE_SOUND      1
 
 // Use wxMediaCtrl
 //
 // Default is 1.
 //
 // Recommended setting: 1
-#define wxUSE_MEDIACTRL     0
+#cmakedefine01 wxUSE_MEDIACTRL
 
 // Use GStreamer for Unix (req a lot of dependancies)
 //
@@ -547,7 +547,7 @@
 // Default is 1
 //
 // Recommended setting: 1 (requires wxUSE_XML)
-#define wxUSE_XRC       1
+#cmakedefine01 wxUSE_XRC
 
 // XML parsing classes. Note that their API will change in the future, so
 // using wxXmlDocument and wxXmlNode in your app is not recommended.
@@ -562,7 +562,7 @@
 // Default is 1
 //
 // Recommended setting: 1
-#define wxUSE_AUI       1
+#cmakedefine01 wxUSE_AUI
 
 
 // Enable the new wxGraphicsPath and wxGraphicsContext classes for an advanced
@@ -674,8 +674,8 @@
 // Default is 1 for all settings.
 //
 // Recommended setting: 1 for wxUSE_TOOLBAR and wxUSE_TOOLBAR_NATIVE.
-#define wxUSE_TOOLBAR 1
-#define wxUSE_TOOLBAR_NATIVE 1
+#cmakedefine01 wxUSE_TOOLBAR
+#cmakedefine01 wxUSE_TOOLBAR_NATIVE
 
 // wxNotebook is a control with several "tabs" located on one of its sides. It
 // may be used to logically organise the data presented to the user instead of
@@ -717,7 +717,7 @@
 // Default is 1.
 //
 // Recommended setting: 1
-#define wxUSE_TOOLBOOK 1
+#cmakedefine01 wxUSE_TOOLBOOK
 
 // wxTabDialog is a generic version of wxNotebook but it is incompatible with
 // the new class. It shouldn't be used in new code.
@@ -734,7 +734,7 @@
 //
 // Recommended setting: 1
 //
-#define wxUSE_GRID         1
+#cmakedefine01 wxUSE_GRID
 
 // wxMiniFrame class: a frame with narrow title bar
 //
@@ -918,7 +918,7 @@
 #define wxUSE_SPLASH 1
 
 // wizards
-#define wxUSE_WIZARDDLG 0
+#define wxUSE_WIZARDDLG 1
 
 // Compile in wxAboutBox() function showing the standard "About" dialog.
 //
@@ -980,7 +980,7 @@
 //
 // Recommended setting: 1 (wxHTML is great!), set to 0 if you want compile a
 // smaller library.
-#define wxUSE_HTML          1
+#cmakedefine01 wxUSE_HTML
 
 // Setting wxUSE_GLCANVAS to 1 enables OpenGL support. You need to have OpenGL
 // headers and libraries to be able to compile the library with wxUSE_GLCANVAS
@@ -991,7 +991,7 @@
 // Default is 0.
 //
 // Recommended setting: 1 if you intend to use OpenGL, 0 otherwise
-#define wxUSE_GLCANVAS       1
+#cmakedefine01 wxUSE_GLCANVAS
 
 // wxRichTextCtrl allows editing of styled text.
 //
@@ -999,7 +999,7 @@
 //
 // Recommended setting: 1, set to 0 if you want compile a
 // smaller library.
-#define wxUSE_RICHTEXT       0
+#cmakedefine01 wxUSE_RICHTEXT
 
 // ----------------------------------------------------------------------------
 // Data transfer
@@ -1050,8 +1050,6 @@
 // space)
 #define wxUSE_SNGLINST_CHECKER  1
 
-#define wxUSE_DRAGIMAGE 1
-
 #define wxUSE_IPC         1
                                 // 0 for no interprocess comms
 #define wxUSE_HELP        1
@@ -1096,7 +1094,7 @@
 // ----------------------------------------------------------------------------
 
 // Define 1 to use ODBC classes
-#define wxUSE_ODBC          0
+#cmakedefine01 wxUSE_ODBC
 
 // For backward compatibility reasons, this parameter now only controls the
 // default scrolling method used by cursors.  This default behavior can be
@@ -1149,34 +1147,36 @@
 // which is mentioned if it is the case.
 
 // Set to 1 for wxImage support (recommended).
-#define wxUSE_IMAGE         1
+#cmakedefine01 wxUSE_IMAGE
+
+#cmakedefine01 wxUSE_DRAGIMAGE
 
 // Set to 1 for PNG format support (requires libpng). Also requires wxUSE_ZLIB.
-#define wxUSE_LIBPNG        1
+#cmakedefine01 wxUSE_LIBPNG
 
 // Set to 1 for JPEG format support (requires libjpeg)
-#define wxUSE_LIBJPEG       1
+#cmakedefine01 wxUSE_LIBJPEG
 
 // Set to 1 for TIFF format support (requires libtiff)
-#define wxUSE_LIBTIFF       1
+#cmakedefine01 wxUSE_LIBTIFF
 
 // Set to 1 for TGA format support (loading only)
-#define wxUSE_TGA           1
+#cmakedefine01 wxUSE_TGA
 
 // Set to 1 for GIF format support
-#define wxUSE_GIF           1
+#cmakedefine01 wxUSE_GIF
 
 // Set to 1 for PNM format support
-#define wxUSE_PNM           1
+#cmakedefine01 wxUSE_PNM
 
 // Set to 1 for PCX format support
-#define wxUSE_PCX           1
+#cmakedefine01 wxUSE_PCX
 
 // Set to 1 for IFF format support (Amiga format)
-#define wxUSE_IFF           0
+#cmakedefine01 wxUSE_IFF
 
 // Set to 1 for XPM format support
-#define wxUSE_XPM           1
+#cmakedefine01 wxUSE_XPM
 
 // Set to 1 for MS Icons and Cursors format support
 #define wxUSE_ICO_CUR       1

@@ -14,6 +14,8 @@
     #pragma hdrstop
 #endif
 
+#if wxUSE_IMAGE
+
 #if wxUSE_STREAMS && wxUSE_ICO_CUR
 
 #include "wx/anidecod.h"
@@ -343,3 +345,5 @@ bool wxANIDecoder::Load( wxInputStream& stream )
 }
 
 #endif // wxUSE_STREAMS && wxUSE_ICO_CUR
+
+#endif // wxUSE_IMAGE

@@ -529,7 +529,7 @@ wxPNGHandler::LoadFile(wxImage *image,
     png_structp png_ptr = png_create_read_struct
                           (
                             PNG_LIBPNG_VER_STRING,
-                            (voidp) NULL,
+                            (void *) NULL,
                             wx_png_error,
                             wx_png_warning
                           );

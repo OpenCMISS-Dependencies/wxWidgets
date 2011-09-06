@@ -118,9 +118,6 @@ public:
             name == _T("notebookpage") ||
             name == _T("separator") ||
             name == _T("sizeritem") ||
-            name == _T("wxMenu") ||
-            name == _T("wxMenuBar") ||
-            name == _T("wxMenuItem") ||
             name.EndsWith(_T("Sizer")) )
         {
             return false;
@@ -137,7 +134,7 @@ public:
         for(i=0;i<m_wdata.Count();++i)
         {
             const XRCWidgetData& w = m_wdata.Item(i);
-            if( !IsRealClass(w.GetClass()) ) continue;
+	    if( !IsRealClass(w.GetClass())) continue;
             if( w.GetName().Length() == 0 ) continue;
             file.Write(
                 _T(" ") + w.GetClass() + _T("* ") + w.GetName()
@@ -149,18 +146,53 @@ public:
                    +  _T("\"), _T(\"")
                    +  m_parentClassName
                    +  _T("\"));\n"));
+        wxString menuBarName = _T("");
         for(i=0;i<m_wdata.Count();++i)
         {
             const XRCWidgetData& w = m_wdata.Item(i);
+	    
             if( !IsRealClass(w.GetClass()) ) continue;
             if( w.GetName().Length() == 0 ) continue;
-            file.Write( _T("  ")
-                        + w.GetName()
-                        + _T(" = XRCCTRL(*this,\"")
-                        + w.GetName()
-                        + _T("\",")
-                        + w.GetClass()
-                        + _T(");\n"));
+	    if( w.GetClass() == _T("wxMenuBar"))
+	    {
+	    	menuBarName = w.GetName();
+	    	file.Write( _T("  ")
+			    + w.GetName()
+			    + _T(" = GetMenuBar();\n"));
+	    	continue;
+	    }
+	    else if( w.GetClass() == _T("wxMenu"))
+	    {
+	    	if( menuBarName.Length() > 0 )
+		{
+			file.Write( _T("  ")
+			            + w.GetName()
+				    + _T(" = 0;\n"));
+		}
+	    }
+	    else if( w.GetClass() == _T("wxMenuItem"))
+	    {
+	    	if( menuBarName.Length() > 0 )
+		{
+			file.Write( _T("  ")
+			            + w.GetName()
+				    + _T(" = ")
+				    + menuBarName
+				    + _T("->FindItem(XRCID(\"")
+				    + w.GetName()
+				    + _T("\"));\n"));
+		}
+	    }
+	    else
+	    {
+                file.Write( _T("  ")
+                            + w.GetName()
+                            + _T(" = XRCCTRL(*this,\"")
+                            + w.GetName()
+                            + _T("\",")
+                            + w.GetClass()
+                            + _T(");\n"));
+            }
         }
         file.Write(_T(" }\n"));
 

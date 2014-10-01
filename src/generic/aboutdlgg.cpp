@@ -221,10 +221,23 @@ void wxGenericAboutDialog::AddCollapsiblePane(const wxString& title,
                                               const wxString& text)
 {
     wxCollapsiblePane *pane = new wxCollapsiblePane(this, wxID_ANY, title);
-    wxStaticText *txt = new wxStaticText(pane->GetPane(), wxID_ANY, text,
+    wxWindow *win = pane->GetPane();
+    wxScrolledWindow *scrwin = new wxScrolledWindow(win, wxID_ANY,
+                                                    wxDefaultPosition, wxDefaultSize,
+                                                    wxVSCROLL);
+    wxStaticText *txt = new wxStaticText(scrwin, wxID_ANY, text,
                                          wxDefaultPosition, wxDefaultSize,
                                          wxALIGN_CENTRE);
-
+    wxBoxSizer *paneSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *swSizer = new wxBoxSizer(wxVERTICAL);
+    swSizer->Add(txt, 1, wxGROW|wxALL, 2);
+    scrwin->SetSizer(swSizer);
+    scrwin->SetScrollRate(5, 5);
+    paneSizer->Add(scrwin, 1, wxEXPAND);
+    win->SetSizer(paneSizer);
+    paneSizer->SetSizeHints(win);
+    scrwin->SetMinSize(wxSize(-1, 200));
+    scrwin->FitInside();
     // don't make the text unreasonably wide
     static const int maxWidth = wxGetDisplaySize().x/3;
     txt->Wrap(maxWidth);

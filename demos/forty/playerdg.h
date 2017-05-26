@@ -4,7 +4,6 @@
 // Author:      Chris Breeze
 // Modified by:
 // Created:     21/07/97
-// RCS-ID:      $Id: playerdg.h 29660 2004-10-05 15:38:40Z ABX $
 // Copyright:   (c) 1993-1998 Chris Breeze
 // Licence:     wxWindows licence
 //---------------------------------------------------------------------------
@@ -24,7 +23,7 @@ public:
     void SelectCallback(wxCommandEvent& event);
     void OnSize(wxSizeEvent& event);
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
 protected:
     friend void SelectCallback(wxListBox&, wxCommandEvent&);

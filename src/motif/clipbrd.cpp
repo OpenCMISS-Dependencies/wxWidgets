@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by: Mattia Barbon (added support for generic wxDataObjects)
 // Created:     17/09/98
-// RCS-ID:      $Id: clipbrd.cpp 40345 2006-07-27 12:57:16Z ABX $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -32,7 +31,9 @@
     #include "wx/dataobj.h"
 #endif
 
-#include "wx/ptr_scpd.h"
+#include "wx/scopedarray.h"
+
+typedef wxScopedArray<wxDataFormat> wxDataFormatScopedArray;
 
 #ifdef __VMS__
 #pragma message disable nosimpint
@@ -149,7 +150,7 @@ wxDataFormat wxRegisterClipboardFormat(char *WXUNUSED(formatName))
 bool wxGetClipboardFormatName(const wxDataFormat& dataFormat, char *formatName,
                               int maxCount)
 {
-    wxStrncpy( formatName, dataFormat.GetId().c_str(), maxCount );
+    wxStrlcpy( formatName, dataFormat.GetId().c_str(), maxCount );
 
     return true;
 }
@@ -184,7 +185,7 @@ static void wxClipboardCallback( Widget widget, long* data_id,
 #endif // Less/Motif
 }
 
-IMPLEMENT_DYNAMIC_CLASS(wxClipboard,wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxClipboard, wxObject);
 
 wxClipboard::wxClipboard()
 {
@@ -233,9 +234,6 @@ bool wxClipboard::SetData( wxDataObject *data )
     return AddData( data );
 }
 
-wxDECLARE_SCOPED_ARRAY( wxDataFormat, wxDataFormatScopedArray )
-wxDEFINE_SCOPED_ARRAY( wxDataFormat, wxDataFormatScopedArray )
-
 #if wxCHECK_LESSTIF()
 void wxClipboardCallback( Widget xwidget, int* data_id,
                           int* priv, int* WXUNUSED(reason) )
@@ -266,7 +264,7 @@ void wxClipboardCallback( Widget xwidget, long* data_id,
 
     wxCharBuffer buffer(size);
     size_t count = dobj->GetFormatCount( wxDataObject::Get );
-    wxDataFormatScopedArray dfarr( new wxDataFormat[count] );
+    wxDataFormatScopedArray dfarr(count);
     dobj->GetAllFormats( dfarr.get(), wxDataObject::Get );
 
     if( !dobj->GetDataHere( dfarr[*priv], buffer.data() ) )
@@ -287,7 +285,7 @@ bool wxClipboard::AddData( wxDataObject *data )
     Display* xdisplay = wxGlobalDisplay();
     Widget xwidget = (Widget)wxTheApp->GetTopLevelRealizedWidget();
     Window xwindow = XtWindow( xwidget );
-    wxXmString label( wxTheApp->GetAppName() );
+    wxXmString label( wxTheApp->GetAppDisplayName() );
     Time timestamp = XtLastTimestampProcessed( xdisplay );
     long itemId;
 
@@ -302,7 +300,7 @@ bool wxClipboard::AddData( wxDataObject *data )
         return false;
 
     size_t count = data->GetFormatCount( wxDataObject::Get );
-    wxDataFormatScopedArray dfarr( new wxDataFormat[count] );
+    wxDataFormatScopedArray dfarr(count);
     data->GetAllFormats( dfarr.get(), wxDataObject::Get );
 
     for( size_t i = 0; i < count; ++i )
@@ -312,7 +310,7 @@ bool wxClipboard::AddData( wxDataObject *data )
         wxString id = dfarr[i].GetId();
 
         while( ( retval = XmClipboardCopy( xdisplay, xwindow, itemId,
-                                           wxConstCast(id.c_str(), char),
+                                           id.char_str(),
                                            NULL, size, i, &data_id ) )
                == XmClipboardLocked );
 
@@ -415,7 +413,7 @@ bool wxClipboard::GetData( wxDataObject& data )
     int count;
     unsigned long max_name_length;
     size_t dfcount = data.GetFormatCount( wxDataObject::Set );
-    wxDataFormatScopedArray dfarr( new wxDataFormat[dfcount] );
+    wxDataFormatScopedArray dfarr(dfcount);
     data.GetAllFormats( dfarr.get(), wxDataObject::Set );
 
     if( XmClipboardInquireCount( xdisplay, xwindow, &count, &max_name_length )
@@ -461,7 +459,7 @@ bool wxClipboard::GetData( wxDataObject& data )
     wxString id = chosenFormat.GetId();
 
     while( ( retval = XmClipboardInquireLength( xdisplay, xwindow,
-                                                wxConstCast(id.c_str(), char),
+                                                id.char_str(),
                                                 &length ) )
            == XmClipboardLocked );
     if( retval != XmClipboardSuccess )
@@ -470,7 +468,7 @@ bool wxClipboard::GetData( wxDataObject& data )
     wxCharBuffer buf(length);
 
     while( ( retval = XmClipboardRetrieve( xdisplay, xwindow,
-                                           wxConstCast(id.c_str(), char),
+                                           id.char_str(),
                                            (XtPointer)buf.data(),
                                            length, &dummy1, &dummy2 ) )
            == XmClipboardLocked );

@@ -5,7 +5,6 @@
 // Author:      Jeffrey C. Ollie <jeff@ollie.clive.ia.us>, Vadim Zeitlin
 // Modified by:
 // Created:     10.02.99
-// RCS-ID:      $Id: longlong.h 54663 2008-07-16 15:22:22Z VZ $
 // Copyright:   (c) 1998 Vadim Zeitlin <zeitlin@dptmaths.ens-cachan.fr>
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -46,12 +45,12 @@
         #warning "Your compiler does not appear to support 64 bit "\
                  "integers, using emulation class instead.\n" \
                  "Please report your compiler version to " \
-                 "wx-dev@lists.wxwidgets.org!"
-    #elif !(defined(__WATCOMC__) || defined(__VISAGECPP__))
+                 "wx-dev@googlegroups.com!"
+    #else
         #pragma warning "Your compiler does not appear to support 64 bit "\
                         "integers, using emulation class instead.\n" \
                         "Please report your compiler version to " \
-                        "wx-dev@lists.wxwidgets.org!"
+                        "wx-dev@googlegroups.com!"
     #endif
 
     #define wxUSE_LONGLONG_WX 1
@@ -67,8 +66,8 @@
         #define wxUSE_LONGLONG_NATIVE 0
     #endif
 
-    class WXDLLIMPEXP_BASE wxLongLongWx;
-    class WXDLLIMPEXP_BASE wxULongLongWx;
+    class WXDLLIMPEXP_FWD_BASE wxLongLongWx;
+    class WXDLLIMPEXP_FWD_BASE wxULongLongWx;
 #if defined(__VISUALC__) && !defined(__WIN32__)
     #define wxLongLong wxLongLongWx
     #define wxULongLong wxULongLongWx
@@ -176,8 +175,12 @@ public:
         // convert to long with range checking in debug mode (only!)
     long ToLong() const
     {
+        // This assert is useless if long long is the same as long (which is
+        // the case under the standard Unix LP64 model).
+#ifdef wxHAS_LONG_LONG_T_DIFFERENT_FROM_LONG
         wxASSERT_MSG( (m_ll >= LONG_MIN) && (m_ll <= LONG_MAX),
-                      _T("wxLongLong to long conversion loss of precision") );
+                      wxT("wxLongLong to long conversion loss of precision") );
+#endif
 
         return wx_truncate_cast(long, m_ll);
     }
@@ -404,18 +407,14 @@ public:
         // convert to ulong with range checking in debug mode (only!)
     unsigned long ToULong() const
     {
-        wxASSERT_MSG( m_ll <= LONG_MAX,
-                      _T("wxULongLong to long conversion loss of precision") );
+        wxASSERT_MSG( m_ll <= ULONG_MAX,
+                      wxT("wxULongLong to long conversion loss of precision") );
 
         return wx_truncate_cast(unsigned long, m_ll);
     }
 
         // convert to double
-#ifdef _MSC_VER
-    double ToDouble() const { return wx_truncate_cast(double, (__int64) m_ll); }
-#else
     double ToDouble() const { return wx_truncate_cast(double, m_ll); }
-#endif
 
     // operations
         // addition
@@ -683,7 +682,7 @@ public:
     long ToLong() const
     {
         wxASSERT_MSG( (m_hi == 0l) || (m_hi == -1l),
-                      _T("wxLongLong to long conversion loss of precision") );
+                      wxT("wxLongLong to long conversion loss of precision") );
 
         return (long)m_lo;
     }
@@ -908,7 +907,7 @@ public:
     unsigned long ToULong() const
     {
         wxASSERT_MSG( m_hi == 0ul,
-                      _T("wxULongLong to long conversion loss of precision") );
+                      wxT("wxULongLong to long conversion loss of precision") );
 
         return (unsigned long)m_lo;
     }
@@ -1062,7 +1061,7 @@ inline wxULongLong operator+(unsigned long l, const wxULongLong& ull) { return u
 inline wxLongLong operator-(unsigned long l, const wxULongLong& ull)
 {
     wxULongLong ret = wxULongLong(l) - ull;
-    return wxLongLong((long)ret.GetHi(),ret.GetLo());
+    return wxLongLong((wxInt32)ret.GetHi(),ret.GetLo());
 }
 
 #if wxUSE_LONGLONG_NATIVE && wxUSE_STREAMS
@@ -1074,6 +1073,58 @@ WXDLLIMPEXP_BASE class wxTextInputStream &operator>>(class wxTextInputStream &st
 WXDLLIMPEXP_BASE class wxTextInputStream &operator>>(class wxTextInputStream &stream, wxLongLong_t &value);
 
 #endif
+
+// ----------------------------------------------------------------------------
+// Specialize numeric_limits<> for our long long wrapper classes.
+// ----------------------------------------------------------------------------
+
+#if wxUSE_LONGLONG_NATIVE
+
+#include <limits>
+
+namespace std
+{
+
+#ifdef __clang__
+  // libstdc++ (used by Clang) uses struct for numeric_limits; unlike gcc, clang
+  // warns about this
+  template<> struct numeric_limits<wxLongLong>  : public numeric_limits<wxLongLong_t> {};
+  template<> struct numeric_limits<wxULongLong> : public numeric_limits<wxULongLong_t> {};
+#else
+  template<> class numeric_limits<wxLongLong>  : public numeric_limits<wxLongLong_t> {};
+  template<> class numeric_limits<wxULongLong> : public numeric_limits<wxULongLong_t> {};
+#endif
+
+} // namespace std
+
+#endif // wxUSE_LONGLONG_NATIVE
+
+// ----------------------------------------------------------------------------
+// Specialize wxArgNormalizer to allow using wxLongLong directly with wx pseudo
+// vararg functions.
+// ----------------------------------------------------------------------------
+
+// Notice that this must be done here and not in wx/strvararg.h itself because
+// we can't include wx/longlong.h from there as this header itself includes
+// wx/string.h which includes wx/strvararg.h too, so to avoid the circular
+// dependencies we can only do it here (or add another header just for this but
+// it doesn't seem necessary).
+#include "wx/strvararg.h"
+
+template<>
+struct WXDLLIMPEXP_BASE wxArgNormalizer<wxLongLong>
+{
+     wxArgNormalizer(wxLongLong value,
+                     const wxFormatString *fmt, unsigned index)
+         : m_value(value)
+     {
+         wxASSERT_ARG_TYPE( fmt, index, wxFormatString::Arg_LongLongInt );
+     }
+
+     wxLongLong_t get() const { return m_value.GetValue(); }
+
+     wxLongLong m_value;
+};
 
 #endif // wxUSE_LONGLONG
 

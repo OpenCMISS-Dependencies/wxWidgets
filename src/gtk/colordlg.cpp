@@ -1,10 +1,9 @@
 /////////////////////////////////////////////////////////////////////////////
-// Name:        gtk/colordlg.cpp
+// Name:        src/gtk/colordlg.cpp
 // Purpose:     Native wxColourDialog for GTK+
 // Author:      Vaclav Slavik
 // Modified by:
 // Created:     2004/06/04
-// RCS-ID:      $Id: colordlg.cpp 38245 2006-03-21 13:33:08Z VZ $
 // Copyright:   (c) Vaclav Slavik, 2004
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -16,7 +15,7 @@
     #pragma hdrstop
 #endif
 
-#if wxUSE_COLOURDLG && defined(__WXGTK20__)
+#if wxUSE_COLOURDLG
 
 #include "wx/colordlg.h"
 
@@ -24,9 +23,19 @@
     #include "wx/intl.h"
 #endif
 
+#include <gtk/gtk.h>
 #include "wx/gtk/private.h"
+#include "wx/gtk/private/gtk2-compat.h"
+#include "wx/gtk/private/dialogcount.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxColourDialog, wxDialog)
+extern "C" {
+static void response(GtkDialog*, int response_id, wxColourDialog* win)
+{
+    win->EndModal(response_id == GTK_RESPONSE_OK ? wxID_OK : wxID_CANCEL);
+}
+}
+
+wxIMPLEMENT_DYNAMIC_CLASS(wxColourDialog, wxDialog);
 
 wxColourDialog::wxColourDialog(wxWindow *parent, wxColourData *data)
 {
@@ -38,19 +47,25 @@ bool wxColourDialog::Create(wxWindow *parent, wxColourData *data)
     if (data)
         m_data = *data;
 
+    m_parent = GetParentForModalDialog(parent, 0);
+    GtkWindow * const parentGTK = m_parent ? GTK_WINDOW(m_parent->m_widget)
+                                           : NULL;
+
     wxString title(_("Choose colour"));
     m_widget = gtk_color_selection_dialog_new(wxGTK_CONV(title));
 
-    if (parent)
+    g_object_ref(m_widget);
+
+    if ( parentGTK )
     {
-        GtkWindow* gtk_parent = GTK_WINDOW( gtk_widget_get_toplevel(parent->m_widget) );
-        gtk_window_set_transient_for(GTK_WINDOW(m_widget),
-                                     gtk_parent);
+        gtk_window_set_transient_for(GTK_WINDOW(m_widget), parentGTK);
     }
 
-    GtkColorSelection *sel =
-        GTK_COLOR_SELECTION(GTK_COLOR_SELECTION_DIALOG(m_widget)->colorsel);
+    GtkColorSelection* sel = GTK_COLOR_SELECTION(
+        gtk_color_selection_dialog_get_color_selection(
+        GTK_COLOR_SELECTION_DIALOG(m_widget)));
     gtk_color_selection_set_has_palette(sel, true);
+    gtk_color_selection_set_has_opacity_control(sel, m_data.GetChooseAlpha());
 
     return true;
 }
@@ -59,45 +74,42 @@ int wxColourDialog::ShowModal()
 {
     ColourDataToDialog();
 
-    gint result = gtk_dialog_run(GTK_DIALOG(m_widget));
-    gtk_widget_hide(m_widget);
+    gulong id = g_signal_connect(m_widget, "response", G_CALLBACK(response), this);
+    int rc = wxDialog::ShowModal();
+    g_signal_handler_disconnect(m_widget, id);
 
-    switch (result)
-    {
-        default:
-            wxFAIL_MSG(_T("unexpected GtkColorSelectionDialog return code"));
-            // fall through
+    if (rc == wxID_OK)
+        DialogToColourData();
 
-        case GTK_RESPONSE_CANCEL:
-        case GTK_RESPONSE_DELETE_EVENT:
-        case GTK_RESPONSE_CLOSE:
-            return wxID_CANCEL;
-
-        case GTK_RESPONSE_OK:
-            DialogToColourData();
-            return wxID_OK;
-    }
+    return rc;
 }
 
 void wxColourDialog::ColourDataToDialog()
 {
-    GtkColorSelection *sel =
-        GTK_COLOR_SELECTION(GTK_COLOR_SELECTION_DIALOG(m_widget)->colorsel);
+    GtkColorSelection* sel = GTK_COLOR_SELECTION(
+        gtk_color_selection_dialog_get_color_selection(
+        GTK_COLOR_SELECTION_DIALOG(m_widget)));
 
-    if (m_data.GetColour().Ok())
+    const wxColour& color = m_data.GetColour();
+    if (color.IsOk())
     {
-        gtk_color_selection_set_current_color(sel,
-                                              m_data.GetColour().GetColor());
+#ifdef __WXGTK3__
+        gtk_color_selection_set_current_rgba(sel, color);
+#else
+        gtk_color_selection_set_current_color(sel, color.GetColor());
+        // Convert alpha range: [0,255] -> [0,65535]
+        gtk_color_selection_set_current_alpha(sel, 257*color.Alpha());
+#endif
     }
 
     // setup the palette:
 
-    GdkColor colors[16];
+    GdkColor colors[wxColourData::NUM_CUSTOM];
     gint n_colors = 0;
-    for (unsigned i = 0; i < 16; i++)
+    for (unsigned i = 0; i < WXSIZEOF(colors); i++)
     {
         wxColour c = m_data.GetCustomColour(i);
-        if (c.Ok())
+        if (c.IsOk())
         {
             colors[n_colors] = *c.GetColor();
             n_colors++;
@@ -112,12 +124,24 @@ void wxColourDialog::ColourDataToDialog()
 
 void wxColourDialog::DialogToColourData()
 {
-    GtkColorSelection *sel =
-        GTK_COLOR_SELECTION(GTK_COLOR_SELECTION_DIALOG(m_widget)->colorsel);
+    GtkColorSelection* sel = GTK_COLOR_SELECTION(
+        gtk_color_selection_dialog_get_color_selection(
+        GTK_COLOR_SELECTION_DIALOG(m_widget)));
 
+#ifdef __WXGTK3__
+    GdkRGBA clr;
+    gtk_color_selection_get_current_rgba(sel, &clr);
+    m_data.SetColour(clr);
+#else
     GdkColor clr;
     gtk_color_selection_get_current_color(sel, &clr);
-    m_data.SetColour(wxColour(clr.red >> 8, clr.green >> 8, clr.blue >> 8));
+    // Set RGB colour
+    wxColour cRGB(clr);
+    guint16 alpha = gtk_color_selection_get_current_alpha(sel);
+    // Set RGBA colour (convert alpha range: [0,65535] -> [0,255]).
+    wxColour cRGBA(cRGB.Red(), cRGB.Green(), cRGB.Blue(), alpha/257);
+    m_data.SetColour(cRGBA);
+#endif
 
     // Extract custom palette:
 
@@ -129,11 +153,9 @@ void wxColourDialog::DialogToColourData()
     gint n_colors;
     if (gtk_color_selection_palette_from_string(pal, &colors, &n_colors))
     {
-        for (int i = 0; i < wxMin(n_colors, 16); i++)
+        for (int i = 0; i < n_colors && i < wxColourData::NUM_CUSTOM; i++)
         {
-            m_data.SetCustomColour(i, wxColour(colors[i].red >> 8,
-                                               colors[i].green >> 8,
-                                               colors[i].blue >> 8));
+            m_data.SetCustomColour(i, wxColour(colors[i]));
         }
         g_free(colors);
     }
@@ -141,5 +163,5 @@ void wxColourDialog::DialogToColourData()
     g_free(pal);
 }
 
-#endif // wxUSE_COLOURDLG && defined(__WXGTK20__)
+#endif // wxUSE_COLOURDLG
 

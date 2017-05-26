@@ -22,44 +22,50 @@ SET( HTML_GENERIC_SRCS
 SOURCE_GROUP( "Generic Sources" FILES ${HTML_GENERIC_SRCS} )
 
 SET( wxHTML_SRCS
-	src/html/helpctrl.cpp
-	src/html/helpdata.cpp
-	src/html/helpdlg.cpp
-	src/html/helpfrm.cpp
-	src/html/helpwnd.cpp
-	src/html/htmlcell.cpp
-	src/html/htmlfilt.cpp
-	src/html/htmlpars.cpp
-	src/html/htmltag.cpp
-	src/html/htmlwin.cpp
-	src/html/htmprint.cpp
-	src/html/m_dflist.cpp
-	src/html/m_fonts.cpp
-	src/html/m_hline.cpp
-	src/html/m_image.cpp
-	src/html/m_layout.cpp
-	src/html/m_links.cpp
-	src/html/m_list.cpp
-	src/html/m_pre.cpp
-	src/html/m_style.cpp
-	src/html/m_tables.cpp
-	src/html/winpars.cpp )
+    src/html/helpctrl.cpp
+    src/html/helpdata.cpp
+    src/html/helpdlg.cpp
+    src/html/helpfrm.cpp
+    src/html/helpwnd.cpp
+    src/html/htmlcell.cpp
+    src/html/htmlfilt.cpp
+    src/html/htmlpars.cpp
+    src/html/htmltag.cpp
+    src/html/htmlwin.cpp
+    src/html/htmprint.cpp
+    src/html/m_dflist.cpp
+    src/html/m_fonts.cpp
+    src/html/m_hline.cpp
+    src/html/m_image.cpp
+    src/html/m_layout.cpp
+    src/html/m_links.cpp
+    src/html/m_list.cpp
+    src/html/m_pre.cpp
+    src/html/m_span.cpp
+    src/html/m_style.cpp
+    src/html/m_tables.cpp
+    src/html/styleparams.cpp
+    src/html/winpars.cpp
+    src/html/chm.cpp )
 SOURCE_GROUP( "wxHTML Sources" FILES ${wxHTML_SRCS} )
 SET( wxHTML_HDRS
-	include/wx/html/helpctrl.h
-	include/wx/html/helpdata.h
-	include/wx/html/helpdlg.h
-	include/wx/html/helpfrm.h
-	include/wx/html/helpwnd.h
-	include/wx/html/htmlcell.h
-	include/wx/html/htmldefs.h
-	include/wx/html/htmlfilt.h
-	include/wx/html/htmlpars.h
-	include/wx/html/htmlproc.h
-	include/wx/html/htmltag.h
-	include/wx/html/htmlwin.h
-	include/wx/html/htmprint.h
-	include/wx/html/m_templ.h
-	include/wx/html/winpars.h )
+    include/wx/html/helpctrl.h
+    include/wx/html/helpdata.h
+    include/wx/html/helpdlg.h
+    include/wx/html/helpfrm.h
+    include/wx/html/helpwnd.h
+    include/wx/html/htmlcell.h
+    include/wx/html/htmldefs.h
+    include/wx/html/htmlfilt.h
+    include/wx/html/htmlpars.h
+    include/wx/html/htmlproc.h
+    include/wx/html/htmltag.h
+    include/wx/html/htmlwin.h
+    include/wx/html/htmprint.h
+    include/wx/html/m_templ.h
+    include/wx/html/styleparams.h
+    include/wx/html/winpars.h
+    include/wx/htmllbox.h
+    include/wx/html/forcelnk.h )
 SOURCE_GROUP( "wxHTML Headers" FILES ${wxHTML_HDRS} )
 

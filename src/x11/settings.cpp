@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     17/09/98
-// RCS-ID:      $Id: settings.cpp 39797 2006-06-19 20:18:46Z ABX $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -44,18 +43,13 @@ wxFont wxSystemSettingsNative::GetFont(wxSystemFont index)
     switch (index)
     {
         case wxSYS_SYSTEM_FIXED_FONT:
-        {
-            return wxFont(12, wxMODERN, wxNORMAL, wxNORMAL, FALSE);
-            break;
-        }
+            return wxFontInfo(12).Family(wxFONTFAMILY_MODERN);
+
         case wxSYS_DEVICE_DEFAULT_FONT:
         case wxSYS_SYSTEM_FONT:
         case wxSYS_DEFAULT_GUI_FONT:
         default:
-        {
-            return wxFont(12, wxSWISS, wxNORMAL, wxNORMAL, FALSE);
-            break;
-        }
+            return wxFontInfo(12).Family(wxFONTFAMILY_SWISS);
     }
 
     return wxFont();

@@ -3,27 +3,12 @@
 // Purpose:
 // Author:      Robert Roebling
 // Created:
-// Id:          $Id: dialog.h 41020 2006-09-05 20:47:48Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:           wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef __GTKDIALOGH__
 #define __GTKDIALOGH__
-
-#include "wx/defs.h"
-
-//-----------------------------------------------------------------------------
-// classes
-//-----------------------------------------------------------------------------
-
-class WXDLLIMPEXP_CORE wxDialog;
-
-//-----------------------------------------------------------------------------
-// global data
-//-----------------------------------------------------------------------------
-
-extern WXDLLIMPEXP_CORE const wxChar wxDialogNameStr[];
 
 //-----------------------------------------------------------------------------
 // wxDialog
@@ -72,8 +57,8 @@ protected:
     void Init();
 
 private:
-    DECLARE_EVENT_TABLE()
-    DECLARE_DYNAMIC_CLASS(wxDialog)
+    wxDECLARE_EVENT_TABLE();
+    wxDECLARE_DYNAMIC_CLASS(wxDialog);
 };
 
 #endif // __GTKDIALOGH__

@@ -2,7 +2,6 @@
 // Name:        src/x11/textctrl.cpp
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: textctrl.cpp 41754 2006-10-08 22:40:14Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -131,9 +130,7 @@ WX_DEFINE_OBJARRAY(wxSourceLineArray);
 //  wxTextCtrl
 //-----------------------------------------------------------------------------
 
-IMPLEMENT_DYNAMIC_CLASS(wxTextCtrl, wxTextCtrlBase)
-
-BEGIN_EVENT_TABLE(wxTextCtrl, wxTextCtrlBase)
+wxBEGIN_EVENT_TABLE(wxTextCtrl, wxTextCtrlBase)
     EVT_PAINT(wxTextCtrl::OnPaint)
     EVT_ERASE_BACKGROUND(wxTextCtrl::OnEraseBackground)
     EVT_CHAR(wxTextCtrl::OnChar)
@@ -152,7 +149,7 @@ BEGIN_EVENT_TABLE(wxTextCtrl, wxTextCtrlBase)
     EVT_UPDATE_UI(wxID_PASTE, wxTextCtrl::OnUpdatePaste)
     EVT_UPDATE_UI(wxID_UNDO, wxTextCtrl::OnUpdateUndo)
     EVT_UPDATE_UI(wxID_REDO, wxTextCtrl::OnUpdateRedo)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 void wxTextCtrl::Init()
 {
@@ -1558,7 +1555,7 @@ void wxTextCtrl::DrawLine( wxDC &dc, int x, int y, const wxString &line2, int li
 
         size_t pos = 0;
         wxString token( GetNextToken( line, pos ) );
-        while (!token.IsNull())
+        while ( !token.empty() )
         {
             if (m_keywords.Index( token ) != wxNOT_FOUND)
             {
@@ -1793,7 +1790,6 @@ void wxTextCtrl::OnChar( wxKeyEvent &event )
     int size_x = 0;
     int size_y = 0;
     GetClientSize( &size_x, &size_y );
-    size_x /= m_charWidth;
     size_y /= m_lineHeight;
     size_y--;
 
@@ -1898,10 +1894,10 @@ void wxTextCtrl::OnChar( wxKeyEvent &event )
         {
             if (m_windowStyle & wxTE_PROCESS_ENTER)
             {
-                wxCommandEvent event(wxEVT_COMMAND_TEXT_ENTER, m_windowId);
+                wxCommandEvent event(wxEVT_TEXT_ENTER, m_windowId);
                 event.SetEventObject(this);
                 event.SetString(GetValue());
-                if (GetEventHandler()->ProcessEvent(event)) return;
+                if (HandleWindowEvent(event)) return;
             }
 
             if (IsSingleLine())
@@ -2373,18 +2369,6 @@ wxSize wxTextCtrl::DoGetBestSize() const
     {
         return wxSize(80, 60);
     }
-}
-
-// ----------------------------------------------------------------------------
-// freeze/thaw
-// ----------------------------------------------------------------------------
-
-void wxTextCtrl::Freeze()
-{
-}
-
-void wxTextCtrl::Thaw()
-{
 }
 
 void wxTextCtrl::OnSetFocus( wxFocusEvent& event )

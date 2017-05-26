@@ -4,7 +4,6 @@
 // Author:      Jaakko Salli
 // Modified by:
 // Created:     Apr-30-2006
-// RCS-ID:      $Id: combo.h 43881 2006-12-09 19:48:21Z PC $
 // Copyright:   (c) Jaakko Salli
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -18,11 +17,9 @@
 
 #if wxUSE_COMBOCTRL
 
-#if !defined(__WXWINCE__) && wxUSE_TIMER
+#if wxUSE_TIMER
     #include "wx/timer.h"
     #define wxUSE_COMBOCTRL_POPUP_ANIMATION     1
-#else
-    #define wxUSE_COMBOCTRL_POPUP_ANIMATION     0
 #endif
 
 
@@ -33,9 +30,9 @@
 // Define this only if native implementation includes all features
 #define wxCOMBOCONTROL_FULLY_FEATURED
 
-extern WXDLLIMPEXP_DATA_CORE(const wxChar) wxComboBoxNameStr[];
+extern WXDLLIMPEXP_DATA_CORE(const char) wxComboBoxNameStr[];
 
-class WXDLLEXPORT wxComboCtrl : public wxComboCtrlBase
+class WXDLLIMPEXP_CORE wxComboCtrl : public wxComboCtrlBase
 {
 public:
     // ctors and such
@@ -73,36 +70,43 @@ public:
     static int GetFeatures() { return wxComboCtrlFeatures::All; }
 
 #if wxUSE_COMBOCTRL_POPUP_ANIMATION
-    void OnTimerEvent( wxTimerEvent& event );
-protected:
-    virtual bool AnimateShow( const wxRect& rect, int flags );
-#endif
+    void OnTimerEvent(wxTimerEvent& WXUNUSED(event)) { DoTimerEvent(); }
 
 protected:
+    void DoTimerEvent();
+
+    virtual bool AnimateShow( const wxRect& rect, int flags );
+#endif // wxUSE_COMBOCTRL_POPUP_ANIMATION
+
+protected:
+
+    // Dummy method - we override all functions that call this
+    virtual WXHWND GetEditHWND() const { return NULL; }
 
     // customization
     virtual void OnResize();
     virtual wxCoord GetNativeTextIndent() const;
-    virtual void OnThemeChange();
 
     // event handlers
     void OnPaintEvent( wxPaintEvent& event );
     void OnMouseEvent( wxMouseEvent& event );
+
+    virtual bool HasTransparentBackground() { return IsDoubleBuffered(); }
 
 private:
     void Init();
 
 #if wxUSE_COMBOCTRL_POPUP_ANIMATION
     // Popup animation related
-    wxLongLong  m_animStart;
+    wxMilliClock_t m_animStart;
     wxTimer     m_animTimer;
     wxRect      m_animRect;
     int         m_animFlags;
 #endif
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
-    DECLARE_DYNAMIC_CLASS(wxComboCtrl)
+    wxDECLARE_DYNAMIC_CLASS(wxComboCtrl);
 };
 
 

@@ -2,13 +2,15 @@
 // Name:        wx/gtk/listbox.h
 // Purpose:     wxListBox class declaration
 // Author:      Robert Roebling
-// Id:          $Id: listbox.h 51659 2008-02-11 16:03:23Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
-#ifndef __GTKLISTBOXH__
-#define __GTKLISTBOXH__
+#ifndef _WX_GTK_LISTBOX_H_
+#define _WX_GTK_LISTBOX_H_
+
+struct _wxTreeEntry;
+struct _GtkTreeIter;
 
 //-----------------------------------------------------------------------------
 // wxListBox
@@ -61,31 +63,27 @@ public:
                 const wxValidator& validator = wxDefaultValidator,
                 const wxString& name = wxListBoxNameStr);
 
-    // implement base class pure virtuals
-    virtual void Clear();
-    virtual void Delete(unsigned int n);
+    virtual unsigned int GetCount() const wxOVERRIDE;
+    virtual wxString GetString(unsigned int n) const wxOVERRIDE;
+    virtual void SetString(unsigned int n, const wxString& s) wxOVERRIDE;
+    virtual int FindString(const wxString& s, bool bCase = false) const wxOVERRIDE;
 
-    virtual unsigned int GetCount() const;
-    virtual wxString GetString(unsigned int n) const;
-    virtual void SetString(unsigned int n, const wxString& s);
-    virtual int FindString(const wxString& s, bool bCase = false) const;
+    virtual bool IsSelected(int n) const wxOVERRIDE;
+    virtual int GetSelection() const wxOVERRIDE;
+    virtual int GetSelections(wxArrayInt& aSelections) const wxOVERRIDE;
 
-    virtual bool IsSelected(int n) const;
-    virtual int GetSelection() const;
-    virtual int GetSelections(wxArrayInt& aSelections) const;
+    virtual void EnsureVisible(int n) wxOVERRIDE;
 
-    virtual void EnsureVisible(int n);
+    virtual int GetTopItem() const wxOVERRIDE;
+
+    virtual void Update() wxOVERRIDE;
 
     static wxVisualAttributes
     GetClassDefaultAttributes(wxWindowVariant variant = wxWINDOW_VARIANT_NORMAL);
 
     // implementation from now on
 
-    GtkWidget *GetConnectWidget();
-
-#if wxUSE_TOOLTIPS
-    void ApplyToolTip( GtkTooltips *tips, const wxChar *tip );
-#endif // wxUSE_TOOLTIPS
+    virtual GtkWidget *GetConnectWidget() wxOVERRIDE;
 
     struct _GtkTreeView   *m_treeview;
     struct _GtkListStore  *m_liststore;
@@ -94,37 +92,46 @@ public:
     bool       m_hasCheckBoxes;
 #endif // wxUSE_CHECKLISTBOX
 
-    bool       m_blockEvent;
+    struct _wxTreeEntry* GTKGetEntry(unsigned pos) const;
 
-    struct _GtkTreeEntry* GtkGetEntry(int pos) const;
-    void GtkInsertItems(const wxArrayString& items,
-                        void** clientData, unsigned int pos);
-    void GtkDeselectAll();
-    void GtkSetSelection(int n, const bool select, const bool blockEvent);
+    void GTKDisableEvents();
+    void GTKEnableEvents();
+
+    void GTKOnSelectionChanged();
+    void GTKOnActivated(int item);
 
 protected:
-    virtual wxSize DoGetBestSize() const;
-    virtual void DoApplyWidgetStyle(GtkRcStyle *style);
-    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& windows) const;
+    virtual void DoClear() wxOVERRIDE;
+    virtual void DoDeleteOneItem(unsigned int n) wxOVERRIDE;
+    virtual wxSize DoGetBestSize() const wxOVERRIDE;
+    virtual void DoApplyWidgetStyle(GtkRcStyle *style) wxOVERRIDE;
+    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& windows) const wxOVERRIDE;
 
-    virtual void DoSetSelection(int n, bool select);
-    virtual int DoAppend(const wxString& item);
-    virtual void DoInsertItems(const wxArrayString& items, unsigned int pos);
-    virtual void DoSetItems(const wxArrayString& items, void **clientData);
-    virtual void DoSetFirstItem(int n);
-    virtual void DoSetItemClientData(unsigned int n, void* clientData);
-    virtual void* DoGetItemClientData(unsigned int n) const;
-    virtual void DoSetItemClientObject(unsigned int n, wxClientData* clientData);
-    virtual wxClientData* DoGetItemClientObject(unsigned int n) const;
-    virtual int DoListHitTest(const wxPoint& point) const;
+    virtual void DoSetSelection(int n, bool select) wxOVERRIDE;
 
-private:
-    void Init(); //common construction
+    virtual int DoInsertItems(const wxArrayStringsAdapter& items,
+                              unsigned int pos,
+                              void **clientData, wxClientDataType type) wxOVERRIDE;
+    virtual int DoInsertOneItem(const wxString& item, unsigned int pos) wxOVERRIDE;
+
+    virtual void DoSetFirstItem(int n) wxOVERRIDE;
+    virtual void DoSetItemClientData(unsigned int n, void* clientData) wxOVERRIDE;
+    virtual void* DoGetItemClientData(unsigned int n) const wxOVERRIDE;
+    virtual int DoListHitTest(const wxPoint& point) const wxOVERRIDE;
+
+    // get the iterator for the given index, returns false if invalid
+    bool GTKGetIteratorFor(unsigned pos, _GtkTreeIter *iter) const;
+
+    // get the index for the given iterator, return wxNOT_FOUND on failure
+    int GTKGetIndexFor(_GtkTreeIter& iter) const;
 
     // common part of DoSetFirstItem() and EnsureVisible()
     void DoScrollToCell(int n, float alignY, float alignX);
 
-    DECLARE_DYNAMIC_CLASS(wxListBox)
+private:
+    void Init(); //common construction
+
+    wxDECLARE_DYNAMIC_CLASS(wxListBox);
 };
 
-#endif // __GTKLISTBOXH__
+#endif // _WX_GTK_LISTBOX_H_

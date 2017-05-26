@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     04/01/98
-// RCS-ID:      $Id: joystick.cpp 39021 2006-05-04 07:57:04Z ABX $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -27,12 +26,10 @@
 
 #include "wx/msw/private.h"
 
-#if !defined(__GNUWIN32_OLD__) || defined(__CYGWIN10__)
-    #include <mmsystem.h>
-#endif
+#include <mmsystem.h>
 
 // Why doesn't BC++ have joyGetPosEx?
-#if !defined(__WIN32__) || defined(__BORLANDC__)
+#if defined(__BORLANDC__)
 #define NO_JOYGETPOSEX
 #endif
 
@@ -40,7 +37,7 @@
 
 #include <regstr.h>
 
-IMPLEMENT_DYNAMIC_CLASS(wxJoystick, wxObject)
+wxIMPLEMENT_DYNAMIC_CLASS(wxJoystick, wxObject);
 
 // Attributes
 ////////////////////////////////////////////////////////////////////////////
@@ -86,6 +83,26 @@ wxPoint wxJoystick::GetPosition() const
         return wxPoint(0,0);
 }
 
+int wxJoystick::GetPosition(unsigned axis) const
+{
+    switch (axis) {
+    case 0:
+        return GetPosition().x;
+    case 1:
+        return GetPosition().y;
+    case 2:
+        return GetZPosition();
+    case 3:
+        return GetRudderPosition();
+    case 4:
+        return GetUPosition();
+    case 5:
+        return GetVPosition();
+    default:
+        return 0;
+    }
+}
+
 int wxJoystick::GetZPosition() const
 {
     JOYINFO joyInfo;
@@ -125,6 +142,14 @@ int wxJoystick::GetButtonState() const
     }
     else
         return 0;
+}
+
+bool wxJoystick::GetButtonState(unsigned id) const
+{
+    if (id > sizeof(int) * 8)
+        return false;
+
+    return (GetButtonState() & (1 << id)) != 0;
 }
 
 /**
@@ -383,41 +408,29 @@ int wxJoystick::GetNumberButtons() const
 
 int wxJoystick::GetNumberAxes() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wNumAxes;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetMaxButtons() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wMaxButtons;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetMaxAxes() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wMaxAxes;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetPollingMin() const
@@ -440,172 +453,120 @@ int wxJoystick::GetPollingMax() const
 
 int wxJoystick::GetRudderMin() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wRmin;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetRudderMax() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wRmax;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetUMin() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wUmin;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetUMax() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wUmax;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetVMin() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wVmin;
-#else
-    return 0;
-#endif
 }
 
 int wxJoystick::GetVMax() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return 0;
     else
         return joyCaps.wVmax;
-#else
-    return 0;
-#endif
 }
 
 
 bool wxJoystick::HasRudder() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_HASR) == JOYCAPS_HASR);
-#else
-    return false;
-#endif
 }
 
 bool wxJoystick::HasZ() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_HASZ) == JOYCAPS_HASZ);
-#else
-    return false;
-#endif
 }
 
 bool wxJoystick::HasU() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_HASU) == JOYCAPS_HASU);
-#else
-    return false;
-#endif
 }
 
 bool wxJoystick::HasV() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_HASV) == JOYCAPS_HASV);
-#else
-    return false;
-#endif
 }
 
 bool wxJoystick::HasPOV() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_HASPOV) == JOYCAPS_HASPOV);
-#else
-    return false;
-#endif
 }
 
 bool wxJoystick::HasPOV4Dir() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_POV4DIR) == JOYCAPS_POV4DIR);
-#else
-    return false;
-#endif
 }
 
 bool wxJoystick::HasPOVCTS() const
 {
-#if defined(__WIN32__)
     JOYCAPS joyCaps;
     if (joyGetDevCaps(m_joystick, & joyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
         return false;
     else
         return ((joyCaps.wCaps & JOYCAPS_POVCTS) == JOYCAPS_POVCTS);
-#else
-    return false;
-#endif
 }
 
 // Operations
@@ -613,9 +574,15 @@ bool wxJoystick::HasPOVCTS() const
 
 bool wxJoystick::SetCapture(wxWindow* win, int pollingFreq)
 {
+#ifdef __WXMSW__
     BOOL changed = (pollingFreq == 0);
     MMRESULT res = joySetCapture((HWND) win->GetHWND(), m_joystick, pollingFreq, changed);
     return (res == JOYERR_NOERROR);
+#else
+    wxUnusedVar(win);
+    wxUnusedVar(pollingFreq);
+    return false;
+#endif
 }
 
 bool wxJoystick::ReleaseCapture()

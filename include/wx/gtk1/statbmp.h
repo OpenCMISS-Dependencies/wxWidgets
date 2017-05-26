@@ -2,7 +2,6 @@
 // Name:        wx/gtk1/statbmp.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: statbmp.h 37065 2006-01-23 02:28:01Z MR $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -53,7 +52,7 @@ public:
 private:
     wxBitmap   m_bitmap;
 
-    DECLARE_DYNAMIC_CLASS(wxStaticBitmap)
+    wxDECLARE_DYNAMIC_CLASS(wxStaticBitmap);
 };
 
 #endif // __GTKSTATICBITMAPH__

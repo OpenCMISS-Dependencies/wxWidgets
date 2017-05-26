@@ -4,9 +4,8 @@
 // Author:      Vadim Zeitlin
 // Modified by:
 // Created:     01.03.03
-// RCS-ID:      $Id: dpycmn.cpp 41548 2006-10-02 05:38:05Z PC $
 // Copyright:   (c) 2003-2006 Vadim Zeitlin <vadim@wxwindows.org>
-// License:     wxWindows licence
+// Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
 // ============================================================================
@@ -60,32 +59,32 @@ class WXDLLEXPORT wxDisplayImplSingle : public wxDisplayImpl
 public:
     wxDisplayImplSingle() : wxDisplayImpl(0) { }
 
-    virtual wxRect GetGeometry() const
+    virtual wxRect GetGeometry() const wxOVERRIDE
     {
         wxRect r;
         wxDisplaySize(&r.width, &r.height);
         return r;
     }
 
-    virtual wxRect GetClientArea() const { return wxGetClientDisplayRect(); }
+    virtual wxRect GetClientArea() const wxOVERRIDE { return wxGetClientDisplayRect(); }
 
-    virtual wxString GetName() const { return wxString(); }
+    virtual wxString GetName() const wxOVERRIDE { return wxString(); }
 
 #if wxUSE_DISPLAY
     // no video modes support for us, provide just the stubs
 
-    virtual wxArrayVideoModes GetModes(const wxVideoMode& WXUNUSED(mode)) const
+    virtual wxArrayVideoModes GetModes(const wxVideoMode& WXUNUSED(mode)) const wxOVERRIDE
     {
         return wxArrayVideoModes();
     }
 
-    virtual wxVideoMode GetCurrentMode() const { return wxVideoMode(); }
+    virtual wxVideoMode GetCurrentMode() const wxOVERRIDE { return wxVideoMode(); }
 
-    virtual bool ChangeMode(const wxVideoMode& WXUNUSED(mode)) { return false; }
+    virtual bool ChangeMode(const wxVideoMode& WXUNUSED(mode)) wxOVERRIDE { return false; }
 #endif // wxUSE_DISPLAY
 
 
-    DECLARE_NO_COPY_CLASS(wxDisplayImplSingle)
+    wxDECLARE_NO_COPY_CLASS(wxDisplayImplSingle);
 };
 
 // ----------------------------------------------------------------------------
@@ -95,20 +94,16 @@ public:
 class wxDisplayModule : public wxModule
 {
 public:
-    virtual bool OnInit() { return true; }
-    virtual void OnExit()
+    virtual bool OnInit() wxOVERRIDE { return true; }
+    virtual void OnExit() wxOVERRIDE
     {
-        if ( gs_factory )
-        {
-            delete gs_factory;
-            gs_factory = NULL;
-        }
+        wxDELETE(gs_factory);
     }
 
-    DECLARE_DYNAMIC_CLASS(wxDisplayModule)
+    wxDECLARE_DYNAMIC_CLASS(wxDisplayModule);
 };
 
-IMPLEMENT_DYNAMIC_CLASS(wxDisplayModule, wxModule)
+wxIMPLEMENT_DYNAMIC_CLASS(wxDisplayModule, wxModule);
 
 // ============================================================================
 // wxDisplay implementation
@@ -145,9 +140,9 @@ wxDisplay::~wxDisplay()
     return Factory().GetFromPoint(pt);
 }
 
-/* static */ int wxDisplay::GetFromWindow(wxWindow *window)
+/* static */ int wxDisplay::GetFromWindow(const wxWindow *window)
 {
-    wxCHECK_MSG( window, wxNOT_FOUND, _T("invalid window") );
+    wxCHECK_MSG( window, wxNOT_FOUND, wxT("invalid window") );
 
     return Factory().GetFromWindow(window);
 }
@@ -158,21 +153,21 @@ wxDisplay::~wxDisplay()
 
 wxRect wxDisplay::GetGeometry() const
 {
-    wxCHECK_MSG( IsOk(), wxRect(), _T("invalid wxDisplay object") );
+    wxCHECK_MSG( IsOk(), wxRect(), wxT("invalid wxDisplay object") );
 
     return m_impl->GetGeometry();
 }
 
 wxRect wxDisplay::GetClientArea() const
 {
-    wxCHECK_MSG( IsOk(), wxRect(), _T("invalid wxDisplay object") );
+    wxCHECK_MSG( IsOk(), wxRect(), wxT("invalid wxDisplay object") );
 
     return m_impl->GetClientArea();
 }
 
 wxString wxDisplay::GetName() const
 {
-    wxCHECK_MSG( IsOk(), wxString(), _T("invalid wxDisplay object") );
+    wxCHECK_MSG( IsOk(), wxString(), wxT("invalid wxDisplay object") );
 
     return m_impl->GetName();
 }
@@ -186,26 +181,26 @@ bool wxDisplay::IsPrimary() const
 
 wxArrayVideoModes wxDisplay::GetModes(const wxVideoMode& mode) const
 {
-    wxCHECK_MSG( IsOk(), wxArrayVideoModes(), _T("invalid wxDisplay object") );
+    wxCHECK_MSG( IsOk(), wxArrayVideoModes(), wxT("invalid wxDisplay object") );
 
     return m_impl->GetModes(mode);
 }
 
 wxVideoMode wxDisplay::GetCurrentMode() const
 {
-    wxCHECK_MSG( IsOk(), wxVideoMode(), _T("invalid wxDisplay object") );
+    wxCHECK_MSG( IsOk(), wxVideoMode(), wxT("invalid wxDisplay object") );
 
     return m_impl->GetCurrentMode();
 }
 
 bool wxDisplay::ChangeMode(const wxVideoMode& mode)
 {
-    wxCHECK_MSG( IsOk(), false, _T("invalid wxDisplay object") );
+    wxCHECK_MSG( IsOk(), false, wxT("invalid wxDisplay object") );
 
     return m_impl->ChangeMode(mode);
 }
 
-#endif // wxUSE_DIRECTDRAW
+#endif // wxUSE_DISPLAY
 
 // ----------------------------------------------------------------------------
 // static functions implementation
@@ -235,10 +230,10 @@ bool wxDisplay::ChangeMode(const wxVideoMode& mode)
 // wxDisplayFactory implementation
 // ============================================================================
 
-int wxDisplayFactory::GetFromWindow(wxWindow *window)
+int wxDisplayFactory::GetFromWindow(const wxWindow *window)
 {
     // consider that the window belongs to the display containing its centre
-    const wxRect r(window->GetRect());
+    const wxRect r(window->GetScreenRect());
     return GetFromPoint(wxPoint(r.x + r.width/2, r.y + r.height/2));
 }
 

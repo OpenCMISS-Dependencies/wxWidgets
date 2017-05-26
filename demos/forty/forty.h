@@ -4,7 +4,6 @@
 // Author:      Chris Breeze
 // Modified by:
 // Created:     21/07/97
-// RCS-ID:      $Id: forty.h 41020 2006-09-05 20:47:48Z VZ $
 // Copyright:   (c) 1993-1998 Chris Breeze
 // Licence:     wxWindows licence
 //---------------------------------------------------------------------------
@@ -32,7 +31,7 @@ private:
     wxString m_helpFile;
 };
 
-DECLARE_APP(FortyApp)
+wxDECLARE_APP(FortyApp);
 
 class FortyCanvas;
 class FortyFrame: public wxFrame
@@ -57,7 +56,7 @@ public:
 
     FortyCanvas* GetCanvas() { return m_canvas; }
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
 private:
     enum MenuCommands {

@@ -2,7 +2,6 @@
 // Name:        wx/gtk/radiobox.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: radiobox.h 40815 2006-08-25 12:59:28Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -12,7 +11,7 @@
 
 #include "wx/bitmap.h"
 
-class WXDLLIMPEXP_CORE wxGTKRadioButtonInfo;
+class WXDLLIMPEXP_FWD_CORE wxGTKRadioButtonInfo;
 
 #include "wx/list.h"
 
@@ -28,7 +27,7 @@ class WXDLLIMPEXP_CORE wxRadioBox : public wxControl,
 {
 public:
     // ctors and dtor
-    wxRadioBox() { Init(); }
+    wxRadioBox() { }
     wxRadioBox(wxWindow *parent,
                wxWindowID id,
                const wxString& title,
@@ -36,13 +35,11 @@ public:
                const wxSize& size = wxDefaultSize,
                int n = 0,
                const wxString choices[] = (const wxString *) NULL,
-               int majorDim = 1,
-               long style = wxRA_HORIZONTAL,
+               int majorDim = 0,
+               long style = wxRA_SPECIFY_COLS,
                const wxValidator& val = wxDefaultValidator,
                const wxString& name = wxRadioBoxNameStr)
     {
-        Init();
-
         Create( parent, id, title, pos, size, n, choices, majorDim, style, val, name );
     }
 
@@ -52,13 +49,11 @@ public:
                const wxPoint& pos,
                const wxSize& size,
                const wxArrayString& choices,
-               int majorDim = 1,
-               long style = wxRA_HORIZONTAL,
+               int majorDim = 0,
+               long style = wxRA_SPECIFY_COLS,
                const wxValidator& val = wxDefaultValidator,
                const wxString& name = wxRadioBoxNameStr)
     {
-        Init();
-
         Create( parent, id, title, pos, size, choices, majorDim, style, val, name );
     }
 
@@ -70,7 +65,7 @@ public:
                 int n = 0,
                 const wxString choices[] = (const wxString *) NULL,
                 int majorDim = 0,
-                long style = wxRA_HORIZONTAL,
+                long style = wxRA_SPECIFY_COLS,
                 const wxValidator& val = wxDefaultValidator,
                 const wxString& name = wxRadioBoxNameStr);
     bool Create(wxWindow *parent,
@@ -80,7 +75,7 @@ public:
                 const wxSize& size,
                 const wxArrayString& choices,
                 int majorDim = 0,
-                long style = wxRA_HORIZONTAL,
+                long style = wxRA_SPECIFY_COLS,
                 const wxValidator& val = wxDefaultValidator,
                 const wxString& name = wxRadioBoxNameStr);
 
@@ -88,38 +83,38 @@ public:
 
 
     // implement wxItemContainerImmutable methods
-    virtual unsigned int GetCount() const;
+    virtual unsigned int GetCount() const wxOVERRIDE;
 
-    virtual wxString GetString(unsigned int n) const;
-    virtual void SetString(unsigned int n, const wxString& s);
+    virtual wxString GetString(unsigned int n) const wxOVERRIDE;
+    virtual void SetString(unsigned int n, const wxString& s) wxOVERRIDE;
 
-    virtual void SetSelection(int n);
-    virtual int GetSelection() const;
+    virtual void SetSelection(int n) wxOVERRIDE;
+    virtual int GetSelection() const wxOVERRIDE;
 
 
     // implement wxRadioBoxBase methods
-    virtual bool Show(unsigned int n, bool show = true);
-    virtual bool Enable(unsigned int n, bool enable = true);
+    virtual bool Show(unsigned int n, bool show = true) wxOVERRIDE;
+    virtual bool Enable(unsigned int n, bool enable = true) wxOVERRIDE;
 
-    virtual bool IsItemEnabled(unsigned int n) const;
-    virtual bool IsItemShown(unsigned int n) const;
+    virtual bool IsItemEnabled(unsigned int n) const wxOVERRIDE;
+    virtual bool IsItemShown(unsigned int n) const wxOVERRIDE;
 
 
     // override some base class methods to operate on radiobox itself too
-    virtual bool Show( bool show = true );
-    virtual bool Enable( bool enable = true );
+    virtual bool Show( bool show = true ) wxOVERRIDE;
+    virtual bool Enable( bool enable = true ) wxOVERRIDE;
 
-    virtual void SetLabel( const wxString& label );
+    virtual void SetLabel( const wxString& label ) wxOVERRIDE;
 
     static wxVisualAttributes
     GetClassDefaultAttributes(wxWindowVariant variant = wxWINDOW_VARIANT_NORMAL);
 
-    virtual int GetItemFromPoint( const wxPoint& pt ) const;
+    virtual int GetItemFromPoint( const wxPoint& pt ) const wxOVERRIDE;
 #if wxUSE_HELP
     // override virtual wxWindow::GetHelpTextAtPoint to use common platform independent
     // wxRadioBoxBase::DoGetHelpTextAtPoint from the platform independent
     // base class-interface wxRadioBoxBase.
-    virtual wxString GetHelpTextAtPoint(const wxPoint & pt, wxHelpEvent::Origin origin) const
+    virtual wxString GetHelpTextAtPoint(const wxPoint & pt, wxHelpEvent::Origin origin) const wxOVERRIDE
     {
         return wxRadioBoxBase::DoGetHelpTextAtPoint( this, pt, origin );
     }
@@ -128,35 +123,31 @@ public:
     // implementation
     // --------------
 
-    void SetFocus();
     void GtkDisableEvents();
     void GtkEnableEvents();
 #if wxUSE_TOOLTIPS
-    void ApplyToolTip( GtkTooltips *tips, const wxChar *tip );
+    virtual void GTKApplyToolTip(const char* tip) wxOVERRIDE;
 #endif // wxUSE_TOOLTIPS
 
-    virtual void OnInternalIdle();
-
-    bool                        m_hasFocus,
-                                m_lostFocus;
     wxRadioBoxButtonsInfoList   m_buttonsInfo;
 
 protected:
+    virtual wxBorder GetDefaultBorder() const wxOVERRIDE { return wxBORDER_NONE; }
+
 #if wxUSE_TOOLTIPS
-    virtual void DoSetItemToolTip(unsigned int n, wxToolTip *tooltip);
+    virtual void DoSetItemToolTip(unsigned int n, wxToolTip *tooltip) wxOVERRIDE;
 #endif
 
-    virtual void DoApplyWidgetStyle(GtkRcStyle *style);
-    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& windows) const;
+    virtual void DoApplyWidgetStyle(GtkRcStyle *style) wxOVERRIDE;
+    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& windows) const wxOVERRIDE;
 
-    virtual bool GTKWidgetNeedsMnemonic() const;
-    virtual void GTKWidgetDoSetMnemonic(GtkWidget* w);
+    virtual bool GTKNeedsToFilterSameWindowFocus() const wxOVERRIDE { return true; }
 
-    // common part of all ctors
-    void Init();
+    virtual bool GTKWidgetNeedsMnemonic() const wxOVERRIDE;
+    virtual void GTKWidgetDoSetMnemonic(GtkWidget* w) wxOVERRIDE;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxRadioBox)
+    wxDECLARE_DYNAMIC_CLASS(wxRadioBox);
 };
 
 #endif // _WX_GTK_RADIOBOX_H_

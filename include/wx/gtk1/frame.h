@@ -2,7 +2,6 @@
 // Name:        wx/gtk1/frame.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: frame.h 37065 2006-01-23 02:28:01Z MR $
 // Copyright:   (c) 1998 Robert Roebling, Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -14,12 +13,12 @@
 // classes
 //-----------------------------------------------------------------------------
 
-class WXDLLIMPEXP_CORE wxMDIChildFrame;
-class WXDLLIMPEXP_CORE wxMDIClientWindow;
-class WXDLLIMPEXP_CORE wxMenu;
-class WXDLLIMPEXP_CORE wxMenuBar;
-class WXDLLIMPEXP_CORE wxToolBar;
-class WXDLLIMPEXP_CORE wxStatusBar;
+class WXDLLIMPEXP_FWD_CORE wxMDIChildFrame;
+class WXDLLIMPEXP_FWD_CORE wxMDIClientWindow;
+class WXDLLIMPEXP_FWD_CORE wxMenu;
+class WXDLLIMPEXP_FWD_CORE wxMenuBar;
+class WXDLLIMPEXP_FWD_CORE wxToolBar;
+class WXDLLIMPEXP_FWD_CORE wxStatusBar;
 
 //-----------------------------------------------------------------------------
 // wxFrame
@@ -51,13 +50,11 @@ public:
                 long style = wxDEFAULT_FRAME_STYLE,
                 const wxString& name = wxFrameNameStr);
 
-    virtual ~wxFrame();
-
 #if wxUSE_STATUSBAR
     virtual void PositionStatusBar();
 
     virtual wxStatusBar* CreateStatusBar(int number = 1,
-                                         long style = wxST_SIZEGRIP|wxFULL_REPAINT_ON_RESIZE,
+                                         long style = wxSTB_DEFAULT_STYLE,
                                          wxWindowID id = 0,
                                          const wxString& name = wxStatusLineNameStr);
 
@@ -103,7 +100,7 @@ public:
 
 #endif // wxUSE_MENUS_NATIVE
 
-    DECLARE_DYNAMIC_CLASS(wxFrame)
+    wxDECLARE_DYNAMIC_CLASS(wxFrame);
 };
 
 #endif // __GTKFRAMEH__

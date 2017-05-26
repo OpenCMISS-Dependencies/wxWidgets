@@ -2,7 +2,6 @@
 // Name:        wx/gtk/gauge.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: gauge.h 42077 2006-10-17 14:44:52Z ABX $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -41,11 +40,6 @@ public:
                  const wxValidator& validator = wxDefaultValidator,
                  const wxString& name = wxGaugeNameStr );
 
-    void SetShadowWidth( int WXUNUSED(w) ) { }
-    void SetBezelFace( int WXUNUSED(w) ) { }
-    int GetShadowWidth() const { return 0; };
-    int GetBezelFace() const { return 0; };
-
     // determinate mode API
     void SetRange( int r );
     void SetValue( int pos );
@@ -61,7 +55,7 @@ public:
     static wxVisualAttributes
     GetClassDefaultAttributes(wxWindowVariant variant = wxWINDOW_VARIANT_NORMAL);
 
-    virtual wxVisualAttributes GetDefaultAttributes() const;
+    virtual wxVisualAttributes GetDefaultAttributes() const wxOVERRIDE;
 
     // implementation
     // -------------
@@ -71,16 +65,15 @@ public:
         m_gaugePos;
 
 protected:
-    // common part of all ctors
-    void Init() { m_rangeMax = m_gaugePos = 0; }
-
     // set the gauge value to the value of m_gaugePos
     void DoSetGauge();
 
-    virtual wxSize DoGetBestSize() const;
+    virtual wxSize DoGetBestSize() const wxOVERRIDE;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxGauge)
+    void Init() { m_rangeMax = m_gaugePos = 0; }
+
+    wxDECLARE_DYNAMIC_CLASS(wxGauge);
 };
 
 #endif

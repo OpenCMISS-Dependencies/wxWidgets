@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     17/09/98
-// RCS-ID:      $Id: settings.cpp 39797 2006-06-19 20:18:46Z ABX $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -111,6 +110,7 @@ wxColour wxSystemSettingsNative::GetColour(wxSystemColour index)
     case wxSYS_COLOUR_INACTIVECAPTIONTEXT:
     case wxSYS_COLOUR_BTNTEXT:
     case wxSYS_COLOUR_INFOTEXT:
+    case wxSYS_COLOUR_LISTBOXTEXT:
     {
         if (but_setting_wid)
         {
@@ -128,6 +128,7 @@ wxColour wxSystemSettingsNative::GetColour(wxSystemColour index)
         }
     }
     case wxSYS_COLOUR_HIGHLIGHTTEXT:
+    case wxSYS_COLOUR_LISTBOXHIGHLIGHTTEXT:
     {
         return *wxWHITE;
     }
@@ -159,7 +160,7 @@ wxColour wxSystemSettingsNative::GetColour(wxSystemColour index)
 
     default:
     case wxSYS_COLOUR_MAX:
-        wxFAIL_MSG( _T("unknown colour") );
+        wxFAIL_MSG( wxT("unknown colour") );
   }
   return *wxWHITE;
 }

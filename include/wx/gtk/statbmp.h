@@ -2,7 +2,6 @@
 // Name:        wx/gtk/statbmp.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: statbmp.h 35650 2005-09-23 12:56:45Z MR $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -35,12 +34,12 @@ public:
                  long style = 0,
                  const wxString& name = wxStaticBitmapNameStr);
 
-    virtual void SetIcon(const wxIcon& icon) { SetBitmap( icon ); }
-    virtual void SetBitmap( const wxBitmap& bitmap );
-    virtual wxBitmap GetBitmap() const { return m_bitmap; }
+    virtual void SetIcon(const wxIcon& icon) wxOVERRIDE { SetBitmap( icon ); }
+    virtual void SetBitmap( const wxBitmap& bitmap ) wxOVERRIDE;
+    virtual wxBitmap GetBitmap() const wxOVERRIDE { return m_bitmap; }
 
     // for compatibility with wxMSW
-    wxIcon GetIcon() const
+    wxIcon GetIcon() const wxOVERRIDE
     {
         // don't use wxDynamicCast, icons and bitmaps are really the same thing
         // in wxGTK
@@ -49,11 +48,11 @@ public:
 
     static wxVisualAttributes
     GetClassDefaultAttributes(wxWindowVariant variant = wxWINDOW_VARIANT_NORMAL);
-    
+
 private:
     wxBitmap   m_bitmap;
 
-    DECLARE_DYNAMIC_CLASS(wxStaticBitmap)
+    wxDECLARE_DYNAMIC_CLASS(wxStaticBitmap);
 };
 
 #endif // __GTKSTATICBITMAPH__

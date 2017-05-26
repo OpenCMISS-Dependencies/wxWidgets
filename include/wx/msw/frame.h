@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     01/02/97
-// RCS-ID:      $Id: frame.h 45498 2007-04-16 13:03:05Z VZ $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -12,7 +11,11 @@
 #ifndef _WX_FRAME_H_
 #define _WX_FRAME_H_
 
-class WXDLLEXPORT wxFrame : public wxFrameBase
+#if wxUSE_TASKBARBUTTON
+class WXDLLIMPEXP_FWD_CORE wxTaskBarButton;
+#endif
+
+class WXDLLIMPEXP_CORE wxFrame : public wxFrameBase
 {
 public:
     // construction
@@ -37,12 +40,10 @@ public:
                 const wxSize& size = wxDefaultSize,
                 long style = wxDEFAULT_FRAME_STYLE,
                 const wxString& name = wxFrameNameStr);
-
     virtual ~wxFrame();
 
     // implement base class pure virtuals
     virtual bool ShowFullScreen(bool show, long style = wxFULLSCREEN_ALL);
-    virtual void Raise();
 
     // implementation only from now on
     // -------------------------------
@@ -60,7 +61,7 @@ public:
     // Status bar
 #if wxUSE_STATUSBAR
     virtual wxStatusBar* OnCreateStatusBar(int number = 1,
-                                           long style = wxST_SIZEGRIP,
+                                           long style = wxSTB_DEFAULT_STYLE,
                                            wxWindowID id = 0,
                                            const wxString& name = wxStatusLineNameStr);
 
@@ -75,16 +76,9 @@ public:
         { return m_useNativeStatusBar; }
 #endif // wxUSE_STATUSBAR
 
-#if wxUSE_MENUS
-    WXHMENU GetWinMenu() const { return m_hMenu; }
-#endif // wxUSE_MENUS
-
     // event handlers
-    bool HandlePaint();
     bool HandleSize(int x, int y, WXUINT flag);
     bool HandleCommand(WXWORD id, WXWORD cmd, WXHWND control);
-    bool HandleMenuSelect(WXWORD nItem, WXWORD nFlags, WXHMENU hMenu);
-    bool HandleMenuLoop(const wxEventType& evtType, WXWORD isPopup);
 
     // tooltip management
 #if wxUSE_TOOLTIPS
@@ -92,9 +86,8 @@ public:
     void SetToolTipCtrl(WXHWND hwndTT) { m_hwndToolTip = hwndTT; }
 #endif // tooltips
 
-    // a MSW only function which sends a size event to the window using its
-    // current size - this has an effect of refreshing the window layout
-    virtual void SendSizeEvent();
+    // override the base class function to handle iconized/maximized frames
+    virtual void SendSizeEvent(int flags = 0);
 
     virtual wxPoint GetClientAreaOrigin() const;
 
@@ -108,6 +101,27 @@ public:
     virtual WXLRESULT MSWWindowProc(WXUINT message,
                                     WXWPARAM wParam,
                                     WXLPARAM lParam);
+
+#if wxUSE_MENUS
+    // get the currently active menu: this is the same as the frame menu for
+    // normal frames but is overridden by wxMDIParentFrame
+    virtual WXHMENU MSWGetActiveMenu() const { return m_hMenu; }
+
+    virtual bool HandleMenuSelect(WXWORD nItem, WXWORD nFlags, WXHMENU hMenu);
+    virtual bool DoSendMenuOpenCloseEvent(wxEventType evtType, wxMenu* menu);
+
+    // Look up the menu in the menu bar.
+    virtual wxMenu* MSWFindMenuFromHMENU(WXHMENU hMenu);
+#endif // wxUSE_MENUS
+
+#if wxUSE_TASKBARBUTTON
+    // Return the taskbar button of the window.
+    //
+    // The pointer returned by this method belongs to the window and will be
+    // deleted when the window itself is, do not delete it yourself. May return
+    // NULL if the initialization of taskbar button failed.
+    wxTaskBarButton* MSWGetTaskBarButton();
+#endif // wxUSE_TASKBARBUTTON
 
 protected:
     // common part of all ctors
@@ -133,9 +147,6 @@ protected:
     // wxMDIChildFrame
     bool MSWDoTranslateMessage(wxFrame *frame, WXMSG *msg);
 
-    // handle WM_INITMENUPOPUP message to generate wxEVT_MENU_OPEN
-    bool HandleInitMenuPopup(WXHMENU hMenu);
-
     virtual bool IsMDIChild() const { return false; }
 
     // get default (wxWidgets) icon for the frame
@@ -154,6 +165,10 @@ protected:
 #if wxUSE_MENUS
     // frame menu, NULL if none
     WXHMENU m_hMenu;
+
+    // The number of currently opened menus: 0 initially, 1 when a top level
+    // menu is opened, 2 when its submenu is opened and so on.
+    int m_menuDepth;
 #endif // wxUSE_MENUS
 
 private:
@@ -164,8 +179,12 @@ private:
     // used by IconizeChildFrames(), see comments there
     bool m_wasMinimized;
 
-    DECLARE_EVENT_TABLE()
-    DECLARE_DYNAMIC_CLASS_NO_COPY(wxFrame)
+#if wxUSE_TASKBARBUTTON
+    wxTaskBarButton* m_taskBarButton;
+#endif
+
+    wxDECLARE_EVENT_TABLE();
+    wxDECLARE_DYNAMIC_CLASS_NO_COPY(wxFrame);
 };
 
 #endif

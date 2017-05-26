@@ -3,7 +3,6 @@
 // Purpose:     wxSpinCtrl class
 // Author:      Robert Roebling
 // Modified by:
-// RCS-ID:      $Id: spinctrl.h 37065 2006-01-23 02:28:01Z MR $
 // Copyright:   (c) Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -32,7 +31,7 @@ public:
                const wxSize& size = wxDefaultSize,
                long style = wxSP_ARROW_KEYS,
                int min = 0, int max = 100, int initial = 0,
-               const wxString& name = _T("wxSpinCtrl"))
+               const wxString& name = wxT("wxSpinCtrl"))
     {
         Create(parent, id, value, pos, size, style, min, max, initial, name);
     }
@@ -44,7 +43,7 @@ public:
                 const wxSize& size = wxDefaultSize,
                 long style = wxSP_ARROW_KEYS,
                 int min = 0, int max = 100, int initial = 0,
-                const wxString& name = _T("wxSpinCtrl"));
+                const wxString& name = wxT("wxSpinCtrl"));
 
     void SetValue(const wxString& text);
     void SetSelection(long from, long to);
@@ -68,7 +67,10 @@ public:
     GtkAdjustment  *m_adjust;
     float           m_oldPos;
 
-protected:
+    virtual int GetBase() const { return m_base; }
+    virtual bool SetBase(int base);
+
+ protected:
     virtual wxSize DoGetBestSize() const;
 
     // Widgets that use the style->base colour for the BG colour should
@@ -76,8 +78,16 @@ protected:
     virtual bool UseGTKStyleBase() const { return true; }
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxSpinCtrl)
-    DECLARE_EVENT_TABLE()
+    // Common part of all ctors.
+    void Init()
+    {
+        m_base = 10;
+    }
+
+    int m_base;
+
+    wxDECLARE_DYNAMIC_CLASS(wxSpinCtrl);
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif

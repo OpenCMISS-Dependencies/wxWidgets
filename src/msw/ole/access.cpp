@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     2003-02-12
-// RCS-ID:      $Id: access.cpp 51833 2008-02-16 11:15:07Z JS $
 // Copyright:   (c) 2003 Julian Smart
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,11 +31,6 @@
     #include "wx/msw/wrapwin.h"
     #include "wx/window.h"
     #include "wx/log.h"
-#endif
-
-// for some compilers, the entire ole2.h must be included, not only oleauto.h
-#if wxUSE_NORLANDER_HEADERS || defined(__WATCOMC__)
-    #include <ole2.h>
 #endif
 
 #include <oleauto.h>
@@ -87,7 +81,7 @@ private:
     wxVariant m_variant;  // List of further variants
     int       m_nCurrent; // Current enum position
 
-    DECLARE_NO_COPY_CLASS(wxIEnumVARIANT)
+    wxDECLARE_NO_COPY_CLASS(wxIEnumVARIANT);
 };
 
 // ----------------------------------------------------------------------------
@@ -186,6 +180,9 @@ class wxIAccessible : public IAccessible
 {
 public:
     wxIAccessible(wxAccessible *pAccessible);
+
+    // Called to indicate object should prepare to be deleted.
+    void Quiesce();
 
     DECLARE_IUNKNOWN_METHODS;
 
@@ -334,8 +331,9 @@ public:
 
 private:
     wxAccessible *m_pAccessible;      // pointer to C++ class we belong to
+    bool m_bQuiescing;                // Object is to be deleted
 
-    DECLARE_NO_COPY_CLASS(wxIAccessible)
+    wxDECLARE_NO_COPY_CLASS(wxIAccessible);
 };
 
 // ============================================================================
@@ -358,6 +356,15 @@ wxIAccessible::wxIAccessible(wxAccessible *pAccessible)
     wxASSERT( pAccessible != NULL );
 
     m_pAccessible = pAccessible;
+    m_bQuiescing = false;
+}
+
+// Called to indicate object should prepare to be deleted.
+
+void wxIAccessible::Quiesce()
+{
+    m_bQuiescing = true;
+    m_pAccessible = NULL;
 }
 
 // Retrieves the child element or child object at a given point on the screen.
@@ -366,7 +373,7 @@ wxIAccessible::wxIAccessible(wxAccessible *pAccessible)
 STDMETHODIMP wxIAccessible::accHitTest(long xLeft, long yLeft, VARIANT* pVarID)
 {
     wxLogTrace(wxT("access"), wxT("accHitTest"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -435,7 +442,7 @@ STDMETHODIMP wxIAccessible::accHitTest(long xLeft, long yLeft, VARIANT* pVarID)
 STDMETHODIMP wxIAccessible::accLocation ( long* pxLeft, long* pyTop, long* pcxWidth, long* pcyHeight, VARIANT varID)
 {
     wxLogTrace(wxT("access"), wxT("accLocation"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -481,7 +488,7 @@ STDMETHODIMP wxIAccessible::accLocation ( long* pxLeft, long* pyTop, long* pcxWi
 
 STDMETHODIMP wxIAccessible::accNavigate ( long navDir, VARIANT varStart, VARIANT* pVarEnd)
 {
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
     wxLogTrace(wxT("access"), wxString(wxT("accNavigate for ")) + m_pAccessible->GetWindow()->GetClassInfo()->GetClassName());
@@ -638,7 +645,7 @@ STDMETHODIMP wxIAccessible::accNavigate ( long navDir, VARIANT varStart, VARIANT
 STDMETHODIMP wxIAccessible::get_accChild ( VARIANT varChildID, IDispatch** ppDispChild)
 {
     wxLogTrace(wxT("access"), wxT("get_accChild"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -712,7 +719,7 @@ STDMETHODIMP wxIAccessible::get_accChild ( VARIANT varChildID, IDispatch** ppDis
 STDMETHODIMP wxIAccessible::get_accChildCount ( long* pCountChildren)
 {
     wxLogTrace(wxT("access"), wxT("get_accChildCount"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -756,7 +763,7 @@ STDMETHODIMP wxIAccessible::get_accChildCount ( long* pCountChildren)
 STDMETHODIMP wxIAccessible::get_accParent ( IDispatch** ppDispParent)
 {
     wxLogTrace(wxT("access"), wxT("get_accParent"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -820,7 +827,7 @@ STDMETHODIMP wxIAccessible::get_accParent ( IDispatch** ppDispParent)
 STDMETHODIMP wxIAccessible::accDoDefaultAction(VARIANT varID)
 {
     wxLogTrace(wxT("access"), wxT("accDoDefaultAction"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -865,7 +872,7 @@ STDMETHODIMP wxIAccessible::accDoDefaultAction(VARIANT varID)
 STDMETHODIMP wxIAccessible::get_accDefaultAction ( VARIANT varID, BSTR* pszDefaultAction)
 {
     wxLogTrace(wxT("access"), wxT("get_accDefaultAction"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -925,7 +932,7 @@ STDMETHODIMP wxIAccessible::get_accDefaultAction ( VARIANT varID, BSTR* pszDefau
 STDMETHODIMP wxIAccessible::get_accDescription ( VARIANT varID, BSTR* pszDescription)
 {
     wxLogTrace(wxT("access"), wxT("get_accDescription"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -982,7 +989,7 @@ STDMETHODIMP wxIAccessible::get_accDescription ( VARIANT varID, BSTR* pszDescrip
 STDMETHODIMP wxIAccessible::get_accHelp ( VARIANT varID, BSTR* pszHelp)
 {
     wxLogTrace(wxT("access"), wxT("get_accHelp"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1042,7 +1049,7 @@ STDMETHODIMP wxIAccessible::get_accHelp ( VARIANT varID, BSTR* pszHelp)
 STDMETHODIMP wxIAccessible::get_accHelpTopic ( BSTR* pszHelpFile, VARIANT varChild, long* pidTopic)
 {
     wxLogTrace(wxT("access"), wxT("get_accHelpTopic"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1087,7 +1094,7 @@ STDMETHODIMP wxIAccessible::get_accKeyboardShortcut ( VARIANT varID, BSTR* pszKe
     wxLogTrace(wxT("access"), wxT("get_accKeyboardShortcut"));
     *pszKeyboardShortcut = NULL;
 
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1146,7 +1153,7 @@ STDMETHODIMP wxIAccessible::get_accName ( VARIANT varID, BSTR* pszName)
     wxLogTrace(wxT("access"), wxT("get_accName"));
     *pszName = NULL;
 
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1197,7 +1204,7 @@ STDMETHODIMP wxIAccessible::get_accName ( VARIANT varID, BSTR* pszName)
 STDMETHODIMP wxIAccessible::get_accRole ( VARIANT varID, VARIANT* pVarRole)
 {
     wxLogTrace(wxT("access"), wxT("get_accRole"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1257,7 +1264,7 @@ STDMETHODIMP wxIAccessible::get_accRole ( VARIANT varID, VARIANT* pVarRole)
 STDMETHODIMP wxIAccessible::get_accState ( VARIANT varID, VARIANT* pVarState)
 {
     wxLogTrace(wxT("access"), wxT("get_accState"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1308,7 +1315,7 @@ STDMETHODIMP wxIAccessible::get_accState ( VARIANT varID, VARIANT* pVarState)
 STDMETHODIMP wxIAccessible::get_accValue ( VARIANT varID, BSTR* pszValue)
 {
     wxLogTrace(wxT("access"), wxT("get_accValue"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1360,7 +1367,7 @@ STDMETHODIMP wxIAccessible::get_accValue ( VARIANT varID, BSTR* pszValue)
 STDMETHODIMP wxIAccessible::accSelect ( long flagsSelect, VARIANT varID )
 {
     wxLogTrace(wxT("access"), wxT("get_accSelect"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1407,7 +1414,7 @@ STDMETHODIMP wxIAccessible::accSelect ( long flagsSelect, VARIANT varID )
 STDMETHODIMP wxIAccessible::get_accFocus ( VARIANT* pVarID)
 {
     wxLogTrace(wxT("access"), wxT("get_accFocus"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1474,7 +1481,7 @@ STDMETHODIMP wxIAccessible::get_accSelection ( VARIANT * pVarChildren)
 {
 #if wxUSE_VARIANT
     wxLogTrace(wxT("access"), wxT("get_accSelection"));
-    wxASSERT (m_pAccessible != NULL);
+    wxASSERT( ( m_pAccessible != NULL ) || ( m_bQuiescing == true ) );
     if (!m_pAccessible)
         return E_FAIL;
 
@@ -1706,6 +1713,7 @@ wxAccessible::wxAccessible(wxWindow* win)
 
 wxAccessible::~wxAccessible()
 {
+    m_pIAccessible->Quiesce();
     m_pIAccessible->Release();
     if (m_pIAccessibleStd)
         ((IAccessible*)m_pIAccessibleStd)->Release();

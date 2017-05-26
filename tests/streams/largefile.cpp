@@ -2,9 +2,8 @@
 // Name:        tests/streams/largefile.cpp
 // Purpose:     Tests for large file support
 // Author:      Mike Wetherell
-// RCS-ID:      $Id: largefile.cpp 43264 2006-11-10 11:31:58Z MW $
 // Copyright:   (c) 2004 Mike Wetherell
-// Licence:     wxWidgets licence
+// Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
 //
@@ -16,8 +15,8 @@
 //
 //  test --verbose largeFile
 //
-// On systems supporting sparse files they may also be registered in the
-// Streams subsuite.
+// On systems supporting sparse files they will also be registered in the
+// Streams subsuite so that they run by default.
 //
 
 // For compilers that support precompilation, includes "wx/wx.h".
@@ -35,9 +34,21 @@
 #include "wx/filename.h"
 #include "wx/wfstream.h"
 
-#ifdef __WXMSW__
-#include "wx/msw/wrapwin.h"
-#include <winioctl.h>
+#ifdef __WINDOWS__
+    #include "wx/msw/wrapwin.h"
+    #ifdef __VISUALC__
+        // 'nonstandard extension used : nameless struct/union' occurs inside
+        // winioctl.h
+        #pragma warning(disable:4201)
+    #endif
+    #include <winioctl.h>
+    #ifdef __VISUALC__
+        #pragma warning(default:4201)
+    #endif
+#endif
+
+#ifdef __VISUALC__
+    #define fileno _fileno
 #endif
 
 using std::auto_ptr;
@@ -71,7 +82,7 @@ void LargeFileTest::runTest()
 {
     // self deleting temp file
     struct TmpFile {
-        TmpFile() : m_name(wxFileName::CreateTempFileName(_T("wxlfs-"))) { }
+        TmpFile() : m_name(wxFileName::CreateTempFileName(wxT("wxlfs-"))) { }
         ~TmpFile() { if (!m_name.empty()) wxRemoveFile(m_name); }
         wxString m_name;
     } tmpfile;
@@ -84,12 +95,12 @@ void LargeFileTest::runTest()
     if (!HasLFS()) {
         haveLFS = false;
         wxString n(getName().c_str(), *wxConvCurrent);
-        wxLogInfo(n + _T(": No large file support, testing up to 2GB only"));
+        wxLogInfo(n + wxT(": No large file support, testing up to 2GB only"));
     }
     else if (IsFAT(tmpfile.m_name)) {
         fourGigLimit = true;
         wxString n(getName().c_str(), *wxConvCurrent);
-        wxLogInfo(n + _T(": FAT volumes are limited to 4GB files"));
+        wxLogInfo(n + wxT(": FAT volumes are limited to 4GB files"));
     }
 
     // size of the test blocks
@@ -110,7 +121,7 @@ void LargeFileTest::runTest()
     // write a large file
     {
         auto_ptr<wxOutputStream> out(MakeOutStream(tmpfile.m_name));
-        
+
         // write 'A's at [ 0x7fffffbf, 0x7fffffff [
         pos = 0x7fffffff - size;
         CPPUNIT_ASSERT(out->SeekO(pos) == pos);
@@ -208,7 +219,7 @@ protected:
 wxInputStream *LargeFileTest_wxFile::MakeInStream(const wxString& name) const
 {
     auto_ptr<wxFileInputStream> in(new wxFileInputStream(name));
-    CPPUNIT_ASSERT(in->Ok());
+    CPPUNIT_ASSERT(in->IsOk());
     return in.release();
 }
 
@@ -240,13 +251,13 @@ protected:
 wxInputStream *LargeFileTest_wxFFile::MakeInStream(const wxString& name) const
 {
     auto_ptr<wxFFileInputStream> in(new wxFFileInputStream(name));
-    CPPUNIT_ASSERT(in->Ok());
+    CPPUNIT_ASSERT(in->IsOk());
     return in.release();
 }
 
 wxOutputStream *LargeFileTest_wxFFile::MakeOutStream(const wxString& name) const
 {
-    wxFFile file(name, _T("w"));
+    wxFFile file(name, wxT("w"));
     CPPUNIT_ASSERT(file.IsOpened());
     FILE *fp = file.fp();
     file.Detach();
@@ -256,8 +267,8 @@ wxOutputStream *LargeFileTest_wxFFile::MakeOutStream(const wxString& name) const
 
 bool LargeFileTest_wxFFile::HasLFS() const
 {
-#ifdef HAVE_FSEEKO
-    return (wxFileOffset)0xffffffff > 0;
+#ifdef wxHAS_LARGE_FFILES
+    return true;
 #else
     return false;
 #endif
@@ -292,12 +303,8 @@ CppUnit::Test *largeFile::suite()
 // Ideally these tests will be part of the default suite so that regressions
 // are picked up. However this is only possible when sparse files are
 // supported otherwise the tests require too much disk space.
-//
-// On unix, most filesystems support sparse files, though not all. So for now
-// I'm not assuming sparse file support on unix. On Windows it's possible to
-// test, and sparse files should be available on Win 5+ with NTFS.
 
-#ifdef __WXMSW__
+#ifdef __WINDOWS__
 
 #ifndef FILE_SUPPORTS_SPARSE_FILES
 #define FILE_SUPPORTS_SPARSE_FILES 0x00000040
@@ -305,7 +312,7 @@ CppUnit::Test *largeFile::suite()
 
 #ifndef FSCTL_SET_SPARSE
 
-#   ifndef FILE_SPECIAL_ACCESS 
+#   ifndef FILE_SPECIAL_ACCESS
 #       define FILE_SPECIAL_ACCESS FILE_ANY_ACCESS
 #   endif
 #   define FSCTL_SET_SPARSE CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 49, \
@@ -320,30 +327,33 @@ void GetVolumeInfo(const wxString& path)
 {
     // extract the volume 'C:\' or '\\tooter\share\' from the path
     wxString vol;
-    
-    if (path.substr(1, 2) == _T(":\\")) {
+
+    if (path.substr(1, 2) == wxT(":\\")) {
         vol = path.substr(0, 3);
     } else {
-        if (path.substr(0, 2) == _T("\\\\")) {
-            size_t i = path.find(_T('\\'), 2);
+        if (path.substr(0, 2) == wxT("\\\\")) {
+            size_t i = path.find(wxT('\\'), 2);
 
             if (i != wxString::npos && i > 2) {
-                size_t j = path.find(_T('\\'), ++i);
+                size_t j = path.find(wxT('\\'), ++i);
 
                 if (j != i)
-                    vol = path.substr(0, j) + _T("\\");
+                    vol = path.substr(0, j) + wxT("\\");
             }
         }
     }
 
     // NULL means the current volume
-    const wxChar *pVol = vol.empty() ? NULL : vol.c_str();
+    const wxChar *pVol = vol.empty() ? (const wxChar *)NULL
+                                     : vol.c_str();
 
     if (!::GetVolumeInformation(pVol, NULL, 0, NULL, NULL,
-                                &volumeFlags, 
+                                &volumeFlags,
                                 volumeType,
                                 WXSIZEOF(volumeType)))
-        wxLogSysError(_T("GetVolumeInformation() failed"));
+    {
+        wxLogSysError(wxT("GetVolumeInformation() failed"));
+    }
 
     volumeInfoInit = true;
 }
@@ -352,7 +362,7 @@ bool IsFAT(const wxString& path)
 {
     if (!volumeInfoInit)
         GetVolumeInfo(path);
-    return wxString(volumeType).Upper().find(_T("FAT")) != wxString::npos;
+    return wxString(volumeType).Upper().find(wxT("FAT")) != wxString::npos;
 }
 
 void MakeSparse(const wxString& path, int fd)
@@ -361,7 +371,7 @@ void MakeSparse(const wxString& path, int fd)
 
     if (!volumeInfoInit)
         GetVolumeInfo(path);
-   
+
     if ((volumeFlags & FILE_SUPPORTS_SPARSE_FILES) != 0)
         if (!::DeviceIoControl((HANDLE)_get_osfhandle(fd),
                                FSCTL_SET_SPARSE,
@@ -369,12 +379,17 @@ void MakeSparse(const wxString& path, int fd)
             volumeFlags &= ~FILE_SUPPORTS_SPARSE_FILES;
 }
 
+// return the suite if sparse files are supported, otherwise return NULL
+//
 CppUnit::Test* GetlargeFileSuite()
 {
     if (!volumeInfoInit) {
-        wxFile file;
-        wxString path = wxFileName::CreateTempFileName(_T("wxlfs-"), &file);
-        MakeSparse(path, file.fd());
+        wxString path;
+        {
+            wxFile file;
+            path = wxFileName::CreateTempFileName(wxT("wxlfs-"), &file);
+            MakeSparse(path, file.fd());
+        }
         wxRemoveFile(path);
     }
 
@@ -384,14 +399,43 @@ CppUnit::Test* GetlargeFileSuite()
         return NULL;
 }
 
-#else // __WXMSW__
+#else // __WINDOWS__
 
 bool IsFAT(const wxString& WXUNUSED(path)) { return false; }
 void MakeSparse(const wxString& WXUNUSED(path), int WXUNUSED(fd)) { }
 
-CppUnit::Test* GetlargeFileSuite() { return NULL; }
+// return the suite if sparse files are supported, otherwise return NULL
+//
+CppUnit::Test* GetlargeFileSuite()
+{
+    wxString path;
+    struct stat st1, st2;
+    memset(&st1, 0, sizeof(st1));
+    memset(&st2, 0, sizeof(st2));
 
-#endif // __WXMSW__
+    {
+        wxFile file;
+        path = wxFileName::CreateTempFileName(wxT("wxlfs-"), &file);
+
+        fstat(file.fd(), &st1);
+        file.Seek(st1.st_blksize);
+        file.Write("x", 1);
+        fstat(file.fd(), &st1);
+
+        file.Seek(0);
+        file.Write("x", 1);
+        fstat(file.fd(), &st2);
+    }
+
+    wxRemoveFile(path);
+
+    if (st1.st_blocks != st2.st_blocks)
+        return largeFile::suite();
+    else
+        return NULL;
+}
+
+#endif // __WINDOWS__
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(largeFile, "largeFile");
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(largeFile, "Streams.largeFile");

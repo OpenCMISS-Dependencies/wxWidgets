@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     17/09/98
-// RCS-ID:      $Id: gauge.h 40325 2006-07-25 14:31:55Z ABX $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -13,9 +12,9 @@
 #define _WX_GAUGE_H_
 
 // Group box
-class WXDLLEXPORT wxGauge : public wxGaugeBase
+class WXDLLIMPEXP_CORE wxGauge : public wxGaugeBase
 {
-    DECLARE_DYNAMIC_CLASS(wxGauge)
+    wxDECLARE_DYNAMIC_CLASS(wxGauge);
 
 public:
     inline wxGauge() { m_rangeMax = 0; m_gaugePos = 0; }
@@ -39,11 +38,9 @@ public:
         const wxValidator& validator = wxDefaultValidator,
         const wxString& name = wxGaugeNameStr);
 
-    void SetShadowWidth(int w);
     void SetRange(int r);
     void SetValue(int pos);
 
-    int GetShadowWidth() const ;
     int GetRange() const ;
     int GetValue() const ;
 

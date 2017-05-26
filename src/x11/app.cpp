@@ -4,7 +4,6 @@
 // Author:      Julian Smart
 // Modified by:
 // Created:     17/09/98
-// RCS-ID:      $Id: app.cpp 53607 2008-05-16 15:21:40Z SN $
 // Copyright:   (c) Julian Smart
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -22,10 +21,10 @@
     #include "wx/frame.h"
     #include "wx/icon.h"
     #include "wx/dialog.h"
-    #include "wx/timer.h"
     #include "wx/memory.h"
     #include "wx/gdicmn.h"
     #include "wx/module.h"
+    #include "wx/crt.h"
 #endif
 
 #include "wx/evtloop.h"
@@ -33,11 +32,13 @@
 
 #include "wx/univ/theme.h"
 #include "wx/univ/renderer.h"
+#include "wx/generic/private/timer.h"
 
 #if wxUSE_THREADS
     #include "wx/thread.h"
 #endif
 
+#include "wx/clipbrd.h"
 #include "wx/x11/private.h"
 
 #include <string.h>
@@ -60,10 +61,14 @@ static wxWindow *g_nextFocus = NULL;
 static wxWindow *g_prevFocus = NULL;
 
 //------------------------------------------------------------------------
+// X11 clipboard event handling
+//------------------------------------------------------------------------
+extern "C" void wxClipboardHandleSelectionRequest(XEvent event);
+
+//------------------------------------------------------------------------
 //   X11 error handling
 //------------------------------------------------------------------------
 
-#ifdef __WXDEBUG__
 typedef int (*XErrorHandlerFunc)(Display *, XErrorEvent *);
 
 XErrorHandlerFunc gs_pfnXErrorHandler = 0;
@@ -76,7 +81,6 @@ static int wxXErrorHandler(Display *dpy, XErrorEvent *xevent)
     else
         return 0;
 }
-#endif // __WXDEBUG__
 
 //------------------------------------------------------------------------
 //   wxApp
@@ -84,18 +88,14 @@ static int wxXErrorHandler(Display *dpy, XErrorEvent *xevent)
 
 long wxApp::sm_lastMessageTime = 0;
 
-IMPLEMENT_DYNAMIC_CLASS(wxApp, wxEvtHandler)
-
-BEGIN_EVENT_TABLE(wxApp, wxEvtHandler)
-    EVT_IDLE(wxAppBase::OnIdle)
-END_EVENT_TABLE()
+wxIMPLEMENT_DYNAMIC_CLASS(wxApp, wxEvtHandler);
 
 bool wxApp::Initialize(int& argC, wxChar **argV)
 {
-#if defined(__WXDEBUG__) && !wxUSE_NANOX
+#if !wxUSE_NANOX
     // install the X error handler
     gs_pfnXErrorHandler = XSetErrorHandler( wxXErrorHandler );
-#endif // __WXDEBUG__
+#endif
 
     wxString displayName;
     bool syncDisplay = false;
@@ -103,9 +103,9 @@ bool wxApp::Initialize(int& argC, wxChar **argV)
     int argCOrig = argC;
     for ( int i = 0; i < argCOrig; i++ )
     {
-        if (wxStrcmp( argV[i], _T("-display") ) == 0)
+        if (wxStrcmp( argV[i], wxT("-display") ) == 0)
         {
-            if (i < (argC - 1))
+            if (i < (argCOrig - 1))
             {
                 argV[i++] = NULL;
 
@@ -115,14 +115,14 @@ bool wxApp::Initialize(int& argC, wxChar **argV)
                 argC -= 2;
             }
         }
-        else if (wxStrcmp( argV[i], _T("-geometry") ) == 0)
+        else if (wxStrcmp( argV[i], wxT("-geometry") ) == 0)
         {
-            if (i < (argC - 1))
+            if (i < (argCOrig - 1))
             {
                 argV[i++] = NULL;
 
                 int w, h;
-                if (wxSscanf(argV[i], _T("%dx%d"), &w, &h) != 2)
+                if (wxSscanf(argV[i], wxT("%dx%d"), &w, &h) != 2)
                 {
                     wxLogError( _("Invalid geometry specification '%s'"),
                                 wxString(argV[i]).c_str() );
@@ -136,14 +136,14 @@ bool wxApp::Initialize(int& argC, wxChar **argV)
                 argC -= 2;
             }
         }
-        else if (wxStrcmp( argV[i], _T("-sync") ) == 0)
+        else if (wxStrcmp( argV[i], wxT("-sync") ) == 0)
         {
             syncDisplay = true;
 
             argV[i] = NULL;
             argC--;
         }
-        else if (wxStrcmp( argV[i], _T("-iconic") ) == 0)
+        else if (wxStrcmp( argV[i], wxT("-iconic") ) == 0)
         {
             g_showIconic = true;
 
@@ -154,12 +154,12 @@ bool wxApp::Initialize(int& argC, wxChar **argV)
 
     if ( argC != argCOrig )
     {
-        // remove the argumens we consumed
+        // remove the arguments we consumed
         for ( int i = 0; i < argC; i++ )
         {
             while ( !argV[i] )
             {
-                memmove(argV + i, argV + i + 1, argCOrig - i);
+                memmove(argV + i, argV + i + 1, (argCOrig - i)*sizeof(wxChar *));
             }
         }
     }
@@ -184,8 +184,11 @@ bool wxApp::Initialize(int& argC, wxChar **argV)
         return false;
 
 #if wxUSE_UNICODE
-    // Glib's type system required by Pango
+    // Glib's type system required by Pango (deprecated since glib 2.36 but
+    // used to be required, so still call it, it's harmless).
+    wxGCC_WARNING_SUPPRESS(deprecated-declarations)
     g_type_init();
+    wxGCC_WARNING_RESTORE()
 #endif
 
 #if wxUSE_INTL
@@ -200,10 +203,8 @@ bool wxApp::Initialize(int& argC, wxChar **argV)
 
 void wxApp::CleanUp()
 {
-    delete wxWidgetHashTable;
-    wxWidgetHashTable = NULL;
-    delete wxClientWidgetHashTable;
-    wxClientWidgetHashTable = NULL;
+    wxDELETE(wxWidgetHashTable);
+    wxDELETE(wxClientWidgetHashTable);
 
     wxAppBase::CleanUp();
 }
@@ -241,7 +242,7 @@ struct wxExposeInfo
 };
 
 extern "C"
-Bool wxX11ExposePredicate (Display *display, XEvent *xevent, XPointer arg)
+Bool wxX11ExposePredicate (Display *WXUNUSED(display), XEvent *xevent, XPointer arg)
 {
     wxExposeInfo *info = (wxExposeInfo*) arg;
 
@@ -295,9 +296,6 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
             return false;
     }
 
-#ifdef __WXDEBUG__
-    wxString windowClass = win->GetClassInfo()->GetClassName();
-#endif
 
     switch (event->type)
     {
@@ -346,7 +344,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
 
                 // If we only have one X11 window, always indicate
                 // that borders might have to be redrawn.
-                if (win->GetMainWindow() == win->GetClientAreaWindow())
+                if (win->X11GetMainWindow() == win->GetClientAreaWindow())
                     win->NeedUpdateNcAreaInIdle();
 
                 // Only erase background, paint in idle time.
@@ -362,7 +360,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
 #if !wxUSE_NANOX
         case GraphicsExpose:
         {
-            wxLogTrace( _T("expose"), _T("GraphicsExpose from %s"), win->GetName().c_str());
+            wxLogTrace( wxT("expose"), wxT("GraphicsExpose from %s"), win->GetName().c_str());
 
             win->GetUpdateRegion().Union( event->xgraphicsexpose.x, event->xgraphicsexpose.y,
                                           event->xgraphicsexpose.width, event->xgraphicsexpose.height);
@@ -392,15 +390,33 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
             // wxLogDebug( "OnKey from %s", win->GetName().c_str() );
 
             // We didn't process wxEVT_KEY_DOWN, so send wxEVT_CHAR
-            if (win->GetEventHandler()->ProcessEvent( keyEvent ))
+            if (win->HandleWindowEvent( keyEvent ))
                 return true;
 
-            keyEvent.SetEventType(wxEVT_CHAR);
             // Do the translation again, retaining the ASCII
             // code.
-            if (wxTranslateKeyEvent(keyEvent, win, window, event, true) &&
-                win->GetEventHandler()->ProcessEvent( keyEvent ))
-                return true;
+            if ( wxTranslateKeyEvent(keyEvent, win, window, event, true) )
+            {
+                switch ( keyEvent.m_keyCode )
+                {
+                    // for modifiers, don't send wxEVT_CHAR event.
+                    // the definition of Modifiers, plese see the doc of
+                    // wxKeyModifier. we only take care of wxMOD_ALT, wxMOD_CONTROL
+                    // wxMOD_SHIFT under X11 platform. Other modifiers is handled
+                    // by window manager.
+                    case WXK_CONTROL:
+                    case WXK_SHIFT:
+                    case WXK_ALT:
+                        break;
+                    default:
+                    {
+                        // process wxEVT_CHAR here
+                        keyEvent.SetEventType(wxEVT_CHAR);
+                        if ( win->HandleWindowEvent( keyEvent ) )
+                            return true;
+                    }
+                }
+            }
 
             if ( (keyEvent.m_keyCode == WXK_TAB) &&
                  win->GetParent() && (win->GetParent()->HasFlag( wxTAB_TRAVERSAL)) )
@@ -412,7 +428,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                 /* CTRL-TAB changes the (parent) window, i.e. switch notebook page */
                 new_event.SetWindowChange( keyEvent.ControlDown() );
                 new_event.SetCurrentFocus( win );
-                return win->GetParent()->GetEventHandler()->ProcessEvent( new_event );
+                return win->GetParent()->HandleWindowEvent( new_event );
             }
 
             return false;
@@ -425,7 +441,24 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
             wxKeyEvent keyEvent(wxEVT_KEY_UP);
             wxTranslateKeyEvent(keyEvent, win, window, event);
 
-            return win->GetEventHandler()->ProcessEvent( keyEvent );
+            // if recieve the modifiers key up. set the corresponding
+            // keyboardState to false.
+            switch ( keyEvent.m_keyCode )
+            {
+                case WXK_CONTROL:
+                    keyEvent.SetControlDown(false);
+                    break;
+                case WXK_SHIFT:
+                    keyEvent.SetShiftDown(false);
+                    break;
+                case WXK_ALT:
+                    keyEvent.SetAltDown(false);
+                    break;
+                default:
+                    break;
+            }
+
+            return win->HandleWindowEvent( keyEvent );
         }
         case ConfigureNotify:
         {
@@ -449,17 +482,15 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                     wxSizeEvent sizeEvent( wxSize(XConfigureEventGetWidth(event), XConfigureEventGetHeight(event)), win->GetId() );
                     sizeEvent.SetEventObject( win );
 
-                    return win->GetEventHandler()->ProcessEvent( sizeEvent );
+                    return win->HandleWindowEvent( sizeEvent );
                 }
             }
             return false;
         }
 #if !wxUSE_NANOX
         case PropertyNotify:
-        {
-            //wxLogDebug("PropertyNotify: %s", windowClass.c_str());
             return HandlePropertyChange(_event);
-        }
+
         case ClientMessage:
         {
             if (!win->IsEnabled())
@@ -477,6 +508,14 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                 }
             }
             return false;
+        }
+        case SelectionRequest:
+        {
+            // A request to paste has occurred.
+            wxClipboardHandleSelectionRequest(*event);
+            // The event handle doesn't care the clipboard
+            // how to response requestor, so just return true.
+            return true;
         }
 #if 0
         case DestroyNotify:
@@ -509,7 +548,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
             wxSizeEvent sizeEvent(sz, win->GetId());
             sizeEvent.SetEventObject(win);
 
-            return win->GetEventHandler()->ProcessEvent( sizeEvent );
+            return win->HandleWindowEvent( sizeEvent );
         }
 #endif
 #endif
@@ -544,14 +583,14 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
 
             if (event->type == ButtonPress)
             {
-                if ((win != wxWindow::FindFocus()) && win->AcceptsFocus())
+                if ((win != wxWindow::FindFocus()) && win->CanAcceptFocus())
                 {
                     // This might actually be done in wxWindow::SetFocus()
                     // and not here. TODO.
                     g_prevFocus = wxWindow::FindFocus();
                     g_nextFocus = win;
 
-                    wxLogTrace( _T("focus"), _T("About to call SetFocus on %s of type %s due to button press"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
+                    wxLogTrace( wxT("focus"), wxT("About to call SetFocus on %s of type %s due to button press"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
 
                     // Record the fact that this window is
                     // getting the focus, because we'll need to
@@ -574,7 +613,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
 #endif
             wxMouseEvent wxevent;
             wxTranslateMouseEvent(wxevent, win, window, event);
-            return win->GetEventHandler()->ProcessEvent( wxevent );
+            return win->HandleWindowEvent( wxevent );
         }
         case FocusIn:
 #if !wxUSE_NANOX
@@ -582,7 +621,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                 (event->xfocus.mode == NotifyNormal))
 #endif
             {
-                wxLogTrace( _T("focus"), _T("FocusIn from %s of type %s"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
+                wxLogTrace( wxT("focus"), wxT("FocusIn from %s of type %s"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
 
                 extern wxWindow* g_GettingFocus;
                 if (g_GettingFocus && g_GettingFocus->GetParent() == win)
@@ -590,7 +629,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                     // Ignore this, this can be a spurious FocusIn
                     // caused by a child having its focus set.
                     g_GettingFocus = NULL;
-                    wxLogTrace( _T("focus"), _T("FocusIn from %s of type %s being deliberately ignored"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
+                    wxLogTrace( wxT("focus"), wxT("FocusIn from %s of type %s being deliberately ignored"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
                     return true;
                 }
                 else
@@ -600,7 +639,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                     focusEvent.SetWindow( g_prevFocus );
                     g_prevFocus = NULL;
 
-                    return win->GetEventHandler()->ProcessEvent(focusEvent);
+                    return win->HandleWindowEvent(focusEvent);
                 }
             }
             return false;
@@ -611,22 +650,15 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
                 (event->xfocus.mode == NotifyNormal))
 #endif
             {
-                wxLogTrace( _T("focus"), _T("FocusOut from %s of type %s"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
+                wxLogTrace( wxT("focus"), wxT("FocusOut from %s of type %s"), win->GetName().c_str(), win->GetClassInfo()->GetClassName() );
 
                 wxFocusEvent focusEvent(wxEVT_KILL_FOCUS, win->GetId());
                 focusEvent.SetEventObject(win);
                 focusEvent.SetWindow( g_nextFocus );
                 g_nextFocus = NULL;
-                return win->GetEventHandler()->ProcessEvent(focusEvent);
+                return win->HandleWindowEvent(focusEvent);
             }
             return false;
-
-#ifdef __WXDEBUG__
-        default:
-            //wxString eventName = wxGetXEventName(XEvent& event);
-            //wxLogDebug(wxT("Event %s not handled"), eventName.c_str());
-            break;
-#endif // __WXDEBUG__
     }
 
     return false;
@@ -634,7 +666,7 @@ bool wxApp::ProcessXEvent(WXEvent* _event)
 
 // This should be redefined in a derived class for
 // handling property change events for XAtom IPC.
-bool wxApp::HandlePropertyChange(WXEvent *event)
+bool wxApp::HandlePropertyChange(WXEvent *WXUNUSED(event))
 {
     // by default do nothing special
     // TODO: what to do for X11
@@ -679,10 +711,7 @@ bool wxApp::OnInitGui()
 #if wxUSE_UNICODE
 
 #include <pango/pango.h>
-#include <pango/pangox.h>
-#ifdef HAVE_PANGO_XFT
-    #include <pango/pangoxft.h>
-#endif
+#include <pango/pangoxft.h>
 
 PangoContext* wxApp::GetPangoContext()
 {
@@ -690,29 +719,25 @@ PangoContext* wxApp::GetPangoContext()
     if ( !s_pangoContext )
     {
         Display *dpy = wxGlobalDisplay();
-
-#ifdef HAVE_PANGO_XFT
         int xscreen = DefaultScreen(dpy);
-        static int use_xft = -1;
-        if (use_xft == -1)
-        {
-            wxString val = wxGetenv( L"GDK_USE_XFT" );
-            use_xft = val == L"1";
-        }
 
-        if (use_xft)
-            s_pangoContext = pango_xft_get_context(dpy, xscreen);
-        else
-#endif // HAVE_PANGO_XFT
-            s_pangoContext = pango_x_get_context(dpy);
+        s_pangoContext = pango_xft_get_context(dpy, xscreen);
 
         if (!PANGO_IS_CONTEXT(s_pangoContext))
+        {
             wxLogError( wxT("No pango context.") );
+        }
     }
 
     return s_pangoContext;
 }
 
+PangoContext* wxGetPangoContext()
+{
+    PangoContext* context = wxTheApp->GetPangoContext();
+    g_object_ref(context);
+    return context;
+}
 #endif // wxUSE_UNICODE
 
 WXColormap wxApp::GetMainColormap(WXDisplay* display)
@@ -733,7 +758,7 @@ WXColormap wxApp::GetMainColormap(WXDisplay* display)
 
 Window wxGetWindowParent(Window window)
 {
-    wxASSERT_MSG( window, _T("invalid window") );
+    wxASSERT_MSG( window, wxT("invalid window") );
 
     return (Window) 0;
 
@@ -770,65 +795,3 @@ void wxApp::Exit()
     wxAppConsole::Exit();
 }
 
-// Yield to other processes
-
-bool wxApp::Yield(bool onlyIfNeeded)
-{
-    // Sometimes only 2 yields seem
-    // to do the trick, e.g. in the
-    // progress dialog
-    int i;
-    for (i = 0; i < 2; i++)
-    {
-        static bool s_inYield = false;
-
-        if ( s_inYield )
-        {
-            if ( !onlyIfNeeded )
-            {
-                wxFAIL_MSG( wxT("wxYield called recursively" ) );
-            }
-
-            return false;
-        }
-
-        s_inYield = true;
-
-        // Make sure we have an event loop object,
-        // or Pending/Dispatch will fail
-        wxEventLoopGuarantor dummyLoopIfNeeded;
-
-        // Call dispatch at least once so that sockets
-        // can be tested
-        wxTheApp->Dispatch();
-
-        while (wxTheApp && wxTheApp->Pending())
-            wxTheApp->Dispatch();
-
-#if wxUSE_TIMER
-        wxTimer::NotifyTimers();
-#endif
-        ProcessIdle();
-
-        s_inYield = false;
-    }
-
-    return true;
-}
-
-#ifdef __WXDEBUG__
-
-void wxApp::OnAssert(const wxChar *file, int line, const wxChar* cond, const wxChar *msg)
-{
-    // While the GUI isn't working that well, just print out the
-    // message.
-#if 1
-    wxAppBase::OnAssert(file, line, cond, msg);
-#else
-    wxString msg2;
-    msg2.Printf("At file %s:%d: %s", file, line, msg);
-    wxLogDebug(msg2);
-#endif
-}
-
-#endif // __WXDEBUG__

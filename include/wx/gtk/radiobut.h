@@ -2,7 +2,6 @@
 // Name:        wx/gtk/radiobut.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: radiobut.h 40815 2006-08-25 12:59:28Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -39,27 +38,24 @@ public:
                  const wxValidator& validator = wxDefaultValidator,
                  const wxString& name = wxRadioButtonNameStr );
 
-    virtual void SetLabel(const wxString& label);
+    virtual void SetLabel(const wxString& label) wxOVERRIDE;
     virtual void SetValue(bool val);
     virtual bool GetValue() const;
-    virtual bool Enable( bool enable = TRUE );
+    virtual bool Enable( bool enable = true ) wxOVERRIDE;
 
     static wxVisualAttributes
     GetClassDefaultAttributes(wxWindowVariant variant = wxWINDOW_VARIANT_NORMAL);
 
-    // implementation
-
-    virtual bool IsRadioButton() const { return TRUE; }
-
-    bool m_blockEvent;
-
 protected:
-    virtual wxSize DoGetBestSize() const;
-    virtual void DoApplyWidgetStyle(GtkRcStyle *style);
-    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& windows) const;
+    virtual wxBorder GetDefaultBorder() const wxOVERRIDE { return wxBORDER_NONE; }
+
+    virtual void DoApplyWidgetStyle(GtkRcStyle *style) wxOVERRIDE;
+    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& windows) const wxOVERRIDE;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxRadioButton)
+    typedef wxControl base_type;
+
+    wxDECLARE_DYNAMIC_CLASS(wxRadioButton);
 };
 
 #endif // _WX_GTK_RADIOBUT_H_

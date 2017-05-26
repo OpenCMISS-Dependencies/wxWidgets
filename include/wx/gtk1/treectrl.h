@@ -4,7 +4,6 @@
 // Author:      Denis Pershin
 // Modified by:
 // Created:     08/08/98
-// RCS-ID:      $Id: treectrl.h 38416 2006-03-28 13:11:20Z ABX $
 // Copyright:   (c) Denis Pershin
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -27,7 +26,7 @@ struct wxTreeViewItem;
 // a callback function used for sorting tree items, it should return -1 if the
 // first item precedes the second, +1 if the second precedes the first or 0 if
 // they're equivalent
-class WXDLLIMPEXP_CORE wxTreeItemData;
+class WXDLLIMPEXP_FWD_CORE wxTreeItemData;
 typedef int (*wxTreeItemCmpFunc)(wxTreeItemData *item1, wxTreeItemData *item2);
 
 // ----------------------------------------------------------------------------
@@ -63,20 +62,12 @@ static const int wxTREE_HITTEST_ONITEM  = wxTREE_HITTEST_ONITEMICON |
                                           wxTREE_HITTEST_ONITEMLABEL |
                                           wxTREE_HITTEST_ONITEMSTATEICON;
 
-#if WXWIN_COMPATIBILITY_2_6
-    // NB: all the following flags are for compatbility only and will be removed in
-    //     next versions
-    // flags for deprecated InsertItem() variant
-    #define wxTREE_INSERT_FIRST 0xFFFF0001
-    #define wxTREE_INSERT_LAST  0xFFFF0002
-#endif
-
 // ----------------------------------------------------------------------------
 // wxTreeItemId identifies an element of the tree. In this implementation, it's
 // just a trivial wrapper around GTK GtkTreeItem *. It's opaque for the
 // application.
 // ----------------------------------------------------------------------------
-class WXDLLEXPORT wxTreeItemId {
+class WXDLLIMPEXP_CORE wxTreeItemId {
 public:
   // ctors
   wxTreeItemId() { m_itemId = NULL; }
@@ -113,7 +104,7 @@ protected:
 // Because the objects of this class are deleted by the tree, they should
 // always be allocated on the heap!
 // ----------------------------------------------------------------------------
-class WXDLLEXPORT wxTreeItemData : private wxTreeItemId {
+class WXDLLIMPEXP_CORE wxTreeItemData : private wxTreeItemId {
 public:
     // default ctor/copy ctor/assignment operator are ok
 
@@ -127,7 +118,7 @@ public:
     const wxTreeItemId& GetId() const { return (wxTreeItemId&) m_itemId; }
 };
 
-class WXDLLEXPORT wxTreeCtrl: public wxControl {
+class WXDLLIMPEXP_CORE wxTreeCtrl: public wxControl {
 public:
   // creation
   // --------
@@ -316,7 +307,7 @@ public:
         // been before. textCtrlClass parameter allows you to create an edit
         // control of arbitrary user-defined class deriving from wxTextCtrl.
     wxTextCtrl* EditLabel(const wxTreeItemId& item,
-                          wxClassInfo* textCtrlClass = CLASSINFO(wxTextCtrl));
+                          wxClassInfo* textCtrlClass = wxCLASSINFO(wxTextCtrl));
         // returns the same pointer as StartEdit() if the item is being edited,
         // NULL otherwise (it's assumed that no more than one item may be
         // edited simultaneously)
@@ -331,39 +322,6 @@ public:
         // NB: this function is not reentrant!
     void SortChildren(const wxTreeItemId& item,
                       wxTreeItemCmpFunc *cmpFunction = NULL);
-
-    // deprecated
-    // ----------
-
-#if WXWIN_COMPATIBILITY_2_6
-    // these methods are deprecated and will be removed in future versions of
-    // wxWidgets, they're here for compatibility only, don't use them in new
-    // code (the comments indicate why these methods are now useless and how to
-    // replace them)
-
-        // use Expand, Collapse, CollapseAndReset or Toggle
-    wxDEPRECATED( void ExpandItem(const wxTreeItemId& item, int action) );
-
-        // use SetImageList
-    wxDEPRECATED( void SetImageList(wxImageList *imageList, int) )
-        { SetImageList(imageList); }
-
-        // use Set/GetItemImage directly
-    wxDEPRECATED( int GetItemSelectedImage(const wxTreeItemId& item) const );
-    wxDEPRECATED( void SetItemSelectedImage(const wxTreeItemId& item, int image) );
-
-        // get the first child of this item
-    wxDEPRECATED( wxTreeItemId GetFirstChild(const wxTreeItemId& item, long& cookie) const );
-        // get the next child (after GetFirstChild or GetNextChild)
-    wxDEPRECATED( wxTreeItemId GetNextChild(const wxTreeItemId& item, long& cookie) const );
-
-        // use AddRoot, PrependItem or AppendItem
-    wxDEPRECATED( wxTreeItemId InsertItem(const wxTreeItemId& parent,
-                                          const wxString& text,
-                                          int image = -1, int selImage = -1,
-                                          long insertAfter = wxTREE_INSERT_LAST) );
-
-#endif // WXWIN_COMPATIBILITY_2_6
 
         // use Set/GetImageList and Set/GetStateImageList
     wxImageList *GetImageList(int) const
@@ -399,7 +357,7 @@ protected:
                               wxTreeItemData *data);
 
 
-    DECLARE_DYNAMIC_CLASS(wxTreeCtrl)
+    wxDECLARE_DYNAMIC_CLASS(wxTreeCtrl);
 };
 
 #endif

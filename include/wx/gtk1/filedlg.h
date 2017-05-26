@@ -2,7 +2,6 @@
 // Name:        wx/gtk1/filedlg.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: filedlg.h 39402 2006-05-28 23:32:12Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -61,8 +60,8 @@ public:
 
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxFileDialog)
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_DYNAMIC_CLASS(wxFileDialog);
+    wxDECLARE_EVENT_TABLE();
     void OnFakeOk( wxCommandEvent &event );
 };
 

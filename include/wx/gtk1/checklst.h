@@ -3,7 +3,6 @@
 // Purpose:     wxCheckListBox class
 // Author:      Robert Roebling
 // Modified by:
-// RCS-ID:      $Id: checklst.h 38319 2006-03-23 22:05:23Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
@@ -18,17 +17,17 @@
 // there is no "right" choice of the checkbox indicators, so allow the user to
 // define them himself if he wants
 #ifndef wxCHECKLBOX_CHECKED
-    #define wxCHECKLBOX_CHECKED   _T('x')
-    #define wxCHECKLBOX_UNCHECKED _T(' ')
+    #define wxCHECKLBOX_CHECKED   wxT('x')
+    #define wxCHECKLBOX_UNCHECKED wxT(' ')
 
-    #define wxCHECKLBOX_STRING    _T("[ ] ")
+    #define wxCHECKLBOX_STRING    wxT("[ ] ")
 #endif
 
 //-----------------------------------------------------------------------------
 // wxCheckListBox
 // ----------------------------------------------------------------------------
 
-class WXDLLIMPEXP_CORE wxCheckListBox : public wxListBox
+class WXDLLIMPEXP_CORE wxCheckListBox : public wxCheckListBoxBase
 {
 public:
     wxCheckListBox();
@@ -54,7 +53,7 @@ public:
     int GetItemHeight() const;
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxCheckListBox)
+    wxDECLARE_DYNAMIC_CLASS(wxCheckListBox);
 };
 
 #endif   //__GTKCHECKLISTH__

@@ -5,7 +5,6 @@
 // Modified by:
 // Created:     14/4/2006
 // Copyright:   (c) Francesco Montorsi
-// RCS-ID:      $Id: filepicker.h 50240 2007-11-25 13:12:53Z VZ $
 // Licence:     wxWindows Licence
 /////////////////////////////////////////////////////////////////////////////
 
@@ -29,16 +28,9 @@
     /* needs to create the dialog in ::Create() and not for each user      */ \
     /* request in response to the user click as the generic implementation */ \
     /* does.                                                               */ \
-    virtual wxWindow *GetDialogParent()                                       \
+    virtual wxWindow *GetDialogParent() wxOVERRIDE                            \
     {                                                                         \
         return NULL;                                                          \
-    }                                                                         \
-                                                                              \
-    virtual bool Destroy()                                                    \
-    {                                                                         \
-        if (m_dialog)                                                         \
-            m_dialog->Destroy();                                              \
-        return wxButton::Destroy();                                           \
     }                                                                         \
                                                                               \
     /* even if wx derive from wxGenericFileButton, i.e. from wxButton, our */ \
@@ -49,7 +41,8 @@
     /* so, override wxButton::GTKGetWindow and return NULL as GTK+ doesn't */ \
     /* give us access to the internal GdkWindow of a GtkFileChooserButton  */ \
 protected:                                                                    \
-    virtual GdkWindow *GTKGetWindow(wxArrayGdkWindows& WXUNUSED(windows)) const \
+    virtual GdkWindow *                                                       \
+    GTKGetWindow(wxArrayGdkWindows& WXUNUSED(windows)) const wxOVERRIDE       \
         { return NULL; }
 
 
@@ -60,7 +53,7 @@ protected:                                                                    \
 class WXDLLIMPEXP_CORE wxFileButton : public wxGenericFileButton
 {
 public:
-    wxFileButton() { m_dialog = NULL; }
+    wxFileButton() { Init(); }
     wxFileButton(wxWindow *parent,
                  wxWindowID id,
                  const wxString& label = wxFilePickerWidgetLabel,
@@ -73,7 +66,8 @@ public:
                  const wxValidator& validator = wxDefaultValidator,
                  const wxString& name = wxFilePickerWidgetNameStr)
     {
-        m_dialog = NULL;
+        Init();
+        m_pickerStyle = style;
         Create(parent, id, label, path, message, wildcard,
                pos, size, style, validator, name);
     }
@@ -98,16 +92,8 @@ public:     // overrides
     // event handler for the click
     void OnDialogOK(wxCommandEvent &);
 
-    // GtkFileChooserButton does not support GTK_FILE_CHOOSER_ACTION_SAVE
-    // so we replace it with GTK_FILE_CHOOSER_ACTION_OPEN; since wxFD_SAVE
-    // is not supported, wxFD_OVERWRITE_PROMPT isn't too...
-    virtual long GetDialogStyle() const
-    {
-         return (wxGenericFileButton::GetDialogStyle() &
-                     ~(wxFD_SAVE | wxFD_OVERWRITE_PROMPT)) | wxFD_OPEN;
-    }
-
-    virtual void SetPath(const wxString &str);
+    virtual void SetPath(const wxString &str) wxOVERRIDE;
+    virtual void SetInitialDirectory(const wxString& dir) wxOVERRIDE;
 
     // see macro defined above
     FILEDIRBTN_OVERRIDES
@@ -115,7 +101,11 @@ public:     // overrides
 protected:
     wxDialog *m_dialog;
 
-    DECLARE_DYNAMIC_CLASS(wxFileButton)
+private:
+    // common part of all ctors
+    void Init() { m_dialog = NULL; }
+
+    wxDECLARE_DYNAMIC_CLASS(wxFileButton);
 };
 
 
@@ -139,6 +129,8 @@ public:
                 const wxString& name = wxFilePickerWidgetNameStr)
     {
         Init();
+
+        m_pickerStyle = style;
 
         Create(parent, id, label, path, message, wxEmptyString,
                 pos, size, style, validator, name);
@@ -164,35 +156,34 @@ public:     // overrides
 
     // GtkFileChooserButton does not support GTK_FILE_CHOOSER_CREATE_FOLDER
     // thus we must ensure that the wxDD_DIR_MUST_EXIST style was given
-    long GetDialogStyle() const
+    long GetDialogStyle() const wxOVERRIDE
     {
         return (wxGenericDirButton::GetDialogStyle() | wxDD_DIR_MUST_EXIST);
     }
 
-    virtual void SetPath(const wxString &str);
+    virtual void SetPath(const wxString &str) wxOVERRIDE;
+    virtual void SetInitialDirectory(const wxString& dir) wxOVERRIDE;
 
     // see macro defined above
     FILEDIRBTN_OVERRIDES
 
 protected:
-    // common part of all ctors
-    void Init()
-    {
-        m_dialog = NULL;
-        m_bIgnoreNextChange = false;
-    }
-
     wxDialog *m_dialog;
 
 public:    // used by the GTK callback only
 
     bool m_bIgnoreNextChange;
 
-    void UpdatePath(const char *gtkpath)
-        { m_path = wxString::FromAscii(gtkpath); }
+    void GTKUpdatePath(const char *gtkpath);
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxDirButton)
+    void Init()
+    {
+        m_dialog = NULL;
+        m_bIgnoreNextChange = false;
+    }
+
+    wxDECLARE_DYNAMIC_CLASS(wxDirButton);
 };
 
 #undef FILEDIRBTN_OVERRIDES

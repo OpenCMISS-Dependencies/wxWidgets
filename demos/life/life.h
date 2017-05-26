@@ -4,25 +4,12 @@
 // Author:      Guillermo Rodriguez Garcia, <guille@iies.es>
 // Modified by:
 // Created:     Jan/2000
-// RCS-ID:      $Id: life.h 41020 2006-09-05 20:47:48Z VZ $
 // Copyright:   (c) 2000, Guillermo Rodriguez Garcia
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef _LIFE_APP_H_
 #define _LIFE_APP_H_
-
-// for compilers that support precompilation, includes "wx/wx.h"
-#include "wx/wxprec.h"
-
-#ifdef __BORLANDC__
-    #pragma hdrstop
-#endif
-
-// for all others, include the necessary headers
-#ifndef WX_PRECOMP
-    #include "wx/wx.h"
-#endif
 
 #include "wx/minifram.h"
 
@@ -54,7 +41,7 @@ public:
 
 private:
     // any class wishing to process wxWidgets events must use this macro
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
     // draw a cell (parametrized by DC)
     void DrawCell(wxInt32 i, wxInt32 j, wxDC &dc);
@@ -106,7 +93,7 @@ public:
 
 private:
     // any class wishing to process wxWidgets events must use this macro
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
     // event handlers
     void OnClose(wxCloseEvent& event);
@@ -130,7 +117,7 @@ public:
 
 private:
     // any class wishing to process wxWidgets events must use this macro
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
     // event handlers
     void OnMenu(wxCommandEvent& event);

@@ -1,10 +1,9 @@
 /////////////////////////////////////////////////////////////////////////////
-// Name:        msw/stackwalk.cpp
+// Name:        src/msw/stackwalk.cpp
 // Purpose:     wxStackWalker implementation for Win32
 // Author:      Vadim Zeitlin
-// Modified by:
+// Modified by: Artur Bac 2010-10-01 AMD64 Port
 // Created:     2005-01-08
-// RCS-ID:      $Id: stackwalk.cpp 47767 2007-07-28 00:16:55Z VZ $
 // Copyright:   (c) 2003-2005 Vadim Zeitlin <vadim@wxwindows.org>
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -51,29 +50,16 @@ void wxStackFrame::OnGetName()
     m_hasName = true;
 
     // get the name of the function for this stack frame entry
-    static const size_t MAX_NAME_LEN = 1024;
-    BYTE symbolBuffer[sizeof(SYMBOL_INFO) + MAX_NAME_LEN];
-    wxZeroMemory(symbolBuffer);
-
-    PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)symbolBuffer;
-    pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-    pSymbol->MaxNameLen = MAX_NAME_LEN;
-
-    DWORD64 symDisplacement = 0;
-    if ( !wxDbgHelpDLL::SymFromAddr
+    if ( !wxDbgHelpDLL::CallSymFromAddr
                         (
                             ::GetCurrentProcess(),
                             GetSymAddr(),
-                            &symDisplacement,
-                            pSymbol
+                            &m_offset,
+                            &m_name
                         ) )
     {
-        wxDbgHelpDLL::LogError(_T("SymFromAddr"));
-        return;
+        wxDbgHelpDLL::LogError(wxT("SymFromAddr"));
     }
-
-    m_name = wxString::FromAscii(pSymbol->Name);
-    m_offset = symDisplacement;
 }
 
 void wxStackFrame::OnGetLocation()
@@ -83,25 +69,11 @@ void wxStackFrame::OnGetLocation()
 
     m_hasLocation = true;
 
-    // get the source line for this stack frame entry
-    IMAGEHLP_LINE lineInfo = { sizeof(IMAGEHLP_LINE) };
-    DWORD dwLineDisplacement;
-    if ( !wxDbgHelpDLL::SymGetLineFromAddr
-                        (
-                            ::GetCurrentProcess(),
-                            GetSymAddr(),
-                            &dwLineDisplacement,
-                            &lineInfo
-                        ) )
-    {
-        // it is normal that we don't have source info for some symbols,
-        // notably all the ones from the system DLLs...
-        //wxDbgHelpDLL::LogError(_T("SymGetLineFromAddr"));
-        return;
-    }
-
-    m_filename = wxString::FromAscii(lineInfo.FileName);
-    m_line = lineInfo.LineNumber;
+    // get the source line for this stack frame entry ignoring possible errors
+    // (it's normal that we don't have source info for some symbols, e.g. all
+    // those from the system DLLs)
+    wxDbgHelpDLL::CallSymGetLineFromAddr(::GetCurrentProcess(), GetSymAddr(),
+                                         &m_filename, &m_line);
 }
 
 bool
@@ -126,11 +98,10 @@ wxStackFrame::GetParam(size_t n,
     return true;
 }
 
-void wxStackFrame::OnParam(PSYMBOL_INFO pSymInfo)
+void wxStackFrame::OnParam(wxSYMBOL_INFO *pSymInfo)
 {
     m_paramTypes.Add(wxEmptyString);
-
-    m_paramNames.Add(wxString::FromAscii(pSymInfo->Name));
+    m_paramNames.Add(pSymInfo->Name);
 
     // if symbol information is corrupted and we crash, the exception is going
     // to be ignored when we're called from WalkFromException() because of the
@@ -159,9 +130,9 @@ void wxStackFrame::OnParam(PSYMBOL_INFO pSymInfo)
 }
 
 BOOL CALLBACK
-EnumSymbolsProc(PSYMBOL_INFO pSymInfo, ULONG WXUNUSED(SymSize), PVOID data)
+EnumSymbolsProc(wxPSYMBOL_INFO pSymInfo, ULONG WXUNUSED(SymSize), PVOID data)
 {
-    wxStackFrame *frame = wx_static_cast(wxStackFrame *, data);
+    wxStackFrame *frame = static_cast<wxStackFrame *>(data);
 
     // we're only interested in parameters
     if ( pSymInfo->Flags & IMAGEHLP_SYMBOL_INFO_PARAMETER )
@@ -190,22 +161,21 @@ void wxStackFrame::OnGetParam()
         // address, this is not a real error
         if ( ::GetLastError() != ERROR_INVALID_ADDRESS )
         {
-            wxDbgHelpDLL::LogError(_T("SymSetContext"));
+            wxDbgHelpDLL::LogError(wxT("SymSetContext"));
         }
 
         return;
     }
 
-    if ( !wxDbgHelpDLL::SymEnumSymbols
+    if ( !wxDbgHelpDLL::CallSymEnumSymbols
                         (
                             ::GetCurrentProcess(),
                             NULL,               // DLL base: use current context
-                            NULL,               // no mask, get all symbols
                             EnumSymbolsProc,    // callback
                             this                // data to pass to it
                         ) )
     {
-        wxDbgHelpDLL::LogError(_T("SymEnumSymbols"));
+        wxDbgHelpDLL::LogError(wxT("SymEnumSymbols"));
     }
 }
 
@@ -214,14 +184,14 @@ void wxStackFrame::OnGetParam()
 // wxStackWalker
 // ----------------------------------------------------------------------------
 
-void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip)
+void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip, size_t maxDepth)
 {
     if ( !wxDbgHelpDLL::Init() )
     {
         // don't log a user-visible error message here because the stack trace
         // is only needed for debugging/diagnostics anyhow and we shouldn't
         // confuse the user by complaining that we couldn't generate it
-        wxLogDebug(_T("Failed to get stack backtrace: %s"),
+        wxLogDebug(wxT("Failed to get stack backtrace: %s"),
                    wxDbgHelpDLL::GetErrorMessage().c_str());
         return;
     }
@@ -233,14 +203,13 @@ void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip)
     // below which should be a real handle... so this is what we use
     const HANDLE hProcess = ::GetCurrentProcess();
 
-    if ( !wxDbgHelpDLL::SymInitialize
+    if ( !wxDbgHelpDLL::CallSymInitialize
                         (
                             hProcess,
-                            NULL,   // use default symbol search path
                             TRUE    // load symbols for all loaded modules
                         ) )
     {
-        wxDbgHelpDLL::LogError(_T("SymInitialize"));
+        wxDbgHelpDLL::LogError(wxT("SymInitialize"));
 
         return;
     }
@@ -253,7 +222,16 @@ void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip)
     STACKFRAME sf;
     wxZeroMemory(sf);
 
-#ifdef _M_IX86
+#if defined(_M_AMD64)
+    sf.AddrPC.Offset       = ctx.Rip;
+    sf.AddrPC.Mode         = AddrModeFlat;
+    sf.AddrStack.Offset    = ctx.Rsp;
+    sf.AddrStack.Mode      = AddrModeFlat;
+    sf.AddrFrame.Offset    = ctx.Rbp;
+    sf.AddrFrame.Mode      = AddrModeFlat;
+
+    dwMachineType = IMAGE_FILE_MACHINE_AMD64;
+#elif  defined(_M_IX86)
     sf.AddrPC.Offset       = ctx.Eip;
     sf.AddrPC.Mode         = AddrModeFlat;
     sf.AddrStack.Offset    = ctx.Esp;
@@ -266,9 +244,8 @@ void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip)
     #error "Need to initialize STACKFRAME on non x86"
 #endif // _M_IX86
 
-    // iterate over all stack frames (but stop after 200 to avoid entering
-    // infinite loop if the stack is corrupted)
-    for ( size_t nLevel = 0; nLevel < 200; nLevel++ )
+    // iterate over all stack frames
+    for ( size_t nLevel = 0; nLevel < maxDepth; nLevel++ )
     {
         // get the next stack frame
         if ( !wxDbgHelpDLL::StackWalk
@@ -285,7 +262,7 @@ void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip)
                             ) )
         {
             if ( ::GetLastError() )
-                wxDbgHelpDLL::LogError(_T("StackWalk"));
+                wxDbgHelpDLL::LogError(wxT("StackWalk"));
 
             break;
         }
@@ -294,38 +271,38 @@ void wxStackWalker::WalkFrom(const CONTEXT *pCtx, size_t skip)
         if ( nLevel >= skip )
         {
             wxStackFrame frame(nLevel - skip,
-                               (void *)sf.AddrPC.Offset,
+                               wxUIntToPtr(sf.AddrPC.Offset),
                                sf.AddrFrame.Offset);
 
             OnStackFrame(frame);
         }
     }
 
-    // this results in crashes inside ntdll.dll when called from
-    // exception handler ...
-#if 0
     if ( !wxDbgHelpDLL::SymCleanup(hProcess) )
     {
-        wxDbgHelpDLL::LogError(_T("SymCleanup"));
+        wxDbgHelpDLL::LogError(wxT("SymCleanup"));
     }
-#endif
 }
 
-void wxStackWalker::WalkFrom(const _EXCEPTION_POINTERS *ep, size_t skip)
+void wxStackWalker::WalkFrom(const _EXCEPTION_POINTERS *ep, size_t skip, size_t maxDepth)
 {
-    WalkFrom(ep->ContextRecord, skip);
+    WalkFrom(ep->ContextRecord, skip, maxDepth);
 }
 
-void wxStackWalker::WalkFromException()
+#if wxUSE_ON_FATAL_EXCEPTION
+
+void wxStackWalker::WalkFromException(size_t maxDepth)
 {
     extern EXCEPTION_POINTERS *wxGlobalSEInformation;
 
     wxCHECK_RET( wxGlobalSEInformation,
-                 _T("wxStackWalker::WalkFromException() can only be called from wxApp::OnFatalException()") );
+                 wxT("wxStackWalker::WalkFromException() can only be called from wxApp::OnFatalException()") );
 
     // don't skip any frames, the first one is where we crashed
-    WalkFrom(wxGlobalSEInformation, 0);
+    WalkFrom(wxGlobalSEInformation, 0, maxDepth);
 }
+
+#endif // wxUSE_ON_FATAL_EXCEPTION
 
 void wxStackWalker::Walk(size_t skip, size_t WXUNUSED(maxDepth))
 {
@@ -333,7 +310,7 @@ void wxStackWalker::Walk(size_t skip, size_t WXUNUSED(maxDepth))
     // get EXCEPTION_POINTERS from it
     //
     // note:
-    //  1. we additionally skip RaiseException() and WalkFromException() frames
+    //  1. we additionally skip RaiseException() and WalkFrom() frames
     //  2. explicit cast to EXCEPTION_POINTERS is needed with VC7.1 even if it
     //     shouldn't have been according to the docs
     __try
@@ -343,7 +320,8 @@ void wxStackWalker::Walk(size_t skip, size_t WXUNUSED(maxDepth))
     __except( WalkFrom((EXCEPTION_POINTERS *)GetExceptionInformation(),
                        skip + 2), EXCEPTION_CONTINUE_EXECUTION )
     {
-        // never executed because of WalkFromException() return value
+        // never executed because the above expression always evaluates to
+        // EXCEPTION_CONTINUE_EXECUTION
     }
 }
 
@@ -374,7 +352,7 @@ wxStackFrame::GetParam(size_t WXUNUSED(n),
     return false;
 }
 
-void wxStackFrame::OnParam(_SYMBOL_INFO * WXUNUSED(pSymInfo))
+void wxStackFrame::OnParam(wxSYMBOL_INFO * WXUNUSED(pSymInfo))
 {
 }
 
@@ -387,19 +365,24 @@ void wxStackFrame::OnGetParam()
 // ----------------------------------------------------------------------------
 
 void
-wxStackWalker::WalkFrom(const CONTEXT * WXUNUSED(pCtx), size_t WXUNUSED(skip))
+wxStackWalker::WalkFrom(const CONTEXT * WXUNUSED(pCtx),
+                        size_t WXUNUSED(skip),
+                        size_t WXUNUSED(maxDepth))
 {
 }
 
 void
 wxStackWalker::WalkFrom(const _EXCEPTION_POINTERS * WXUNUSED(ep),
-                        size_t WXUNUSED(skip))
+                        size_t WXUNUSED(skip),
+                        size_t WXUNUSED(maxDepth))
 {
 }
 
-void wxStackWalker::WalkFromException()
+#if wxUSE_ON_FATAL_EXCEPTION
+void wxStackWalker::WalkFromException(size_t WXUNUSED(maxDepth))
 {
 }
+#endif // wxUSE_ON_FATAL_EXCEPTION
 
 void wxStackWalker::Walk(size_t WXUNUSED(skip), size_t WXUNUSED(maxDepth))
 {

@@ -2,7 +2,6 @@
 // Name:        wx/gtk/stattext.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: stattext.h 42077 2006-10-17 14:44:52Z ABX $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -14,7 +13,7 @@
 // wxStaticText
 //-----------------------------------------------------------------------------
 
-class WXDLLIMPEXP_CORE wxStaticText : public wxControl
+class WXDLLIMPEXP_CORE wxStaticText : public wxStaticTextBase
 {
 public:
     wxStaticText();
@@ -34,32 +33,36 @@ public:
                 long style = 0,
                 const wxString &name = wxStaticTextNameStr );
 
-    wxString GetLabel() const;
-    void SetLabel( const wxString &label );
+    void SetLabel( const wxString &label ) wxOVERRIDE;
 
-    bool SetFont( const wxFont &font );
-    bool SetForegroundColour( const wxColour& colour );
+    bool SetFont( const wxFont &font ) wxOVERRIDE;
 
     static wxVisualAttributes
     GetClassDefaultAttributes(wxWindowVariant variant = wxWINDOW_VARIANT_NORMAL);
-
-    // see wx/stattext.h
-    void Wrap(int width);
 
     // implementation
     // --------------
 
 protected:
-    virtual bool GTKWidgetNeedsMnemonic() const;
-    virtual void GTKWidgetDoSetMnemonic(GtkWidget* w);
+    virtual bool GTKWidgetNeedsMnemonic() const wxOVERRIDE;
+    virtual void GTKWidgetDoSetMnemonic(GtkWidget* w) wxOVERRIDE;
 
-    virtual void DoSetSize(int x, int y,
-                           int width, int height,
-                           int sizeFlags = wxSIZE_AUTO);
+    virtual wxSize DoGetBestSize() const wxOVERRIDE;
 
-    virtual wxSize DoGetBestSize() const;
+    virtual wxString DoGetLabel() const wxOVERRIDE;
+    virtual void DoSetLabel(const wxString& str) wxOVERRIDE;
+#if wxUSE_MARKUP
+    virtual bool DoSetLabelMarkup(const wxString& markup) wxOVERRIDE;
+#endif // wxUSE_MARKUP
 
-    DECLARE_DYNAMIC_CLASS(wxStaticText)
+private:
+    // Common part of SetLabel() and DoSetLabelMarkup().
+    typedef void (wxStaticText::*GTKLabelSetter)(GtkLabel *, const wxString&);
+
+    void GTKDoSetLabel(GTKLabelSetter setter, const wxString& label);
+
+
+    wxDECLARE_DYNAMIC_CLASS(wxStaticText);
 };
 
 #endif

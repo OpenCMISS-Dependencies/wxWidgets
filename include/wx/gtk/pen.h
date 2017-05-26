@@ -2,7 +2,6 @@
 // Name:        wx/gtk/pen.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: pen.h 41751 2006-10-08 21:56:55Z VZ $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -10,52 +9,55 @@
 #ifndef _WX_GTK_PEN_H_
 #define _WX_GTK_PEN_H_
 
-#include "wx/gdiobj.h"
-#include "wx/gdicmn.h"
-
-typedef    gint8 wxGTKDash;
+typedef signed char wxGTKDash;
 
 //-----------------------------------------------------------------------------
 // wxPen
 //-----------------------------------------------------------------------------
 
-class WXDLLIMPEXP_CORE wxPen: public wxGDIObject
+class WXDLLIMPEXP_CORE wxPen: public wxPenBase
 {
 public:
     wxPen() { }
 
-    wxPen( const wxColour &colour, int width = 1, int style = wxSOLID );
+    wxPen( const wxColour &colour, int width = 1, wxPenStyle style = wxPENSTYLE_SOLID );
+
     virtual ~wxPen();
 
-    bool Ok() const { return IsOk(); }
-    bool IsOk() const { return m_refData != NULL; }
+    bool operator==(const wxPen& pen) const;
+    bool operator!=(const wxPen& pen) const { return !(*this == pen); }
 
-    bool operator == ( const wxPen& pen ) const;
-    bool operator != (const wxPen& pen) const { return !(*this == pen); }
+    void SetColour( const wxColour &colour ) wxOVERRIDE;
+    void SetColour( unsigned char red, unsigned char green, unsigned char blue ) wxOVERRIDE;
+    void SetCap( wxPenCap capStyle ) wxOVERRIDE;
+    void SetJoin( wxPenJoin joinStyle ) wxOVERRIDE;
+    void SetStyle( wxPenStyle style ) wxOVERRIDE;
+    void SetWidth( int width ) wxOVERRIDE;
+    void SetDashes( int number_of_dashes, const wxDash *dash ) wxOVERRIDE;
+    void SetStipple(const wxBitmap& stipple) wxOVERRIDE;
 
-    void SetColour( const wxColour &colour );
-    void SetColour( unsigned char red, unsigned char green, unsigned char blue );
-    void SetCap( int capStyle );
-    void SetJoin( int joinStyle );
-    void SetStyle( int style );
-    void SetWidth( int width );
-    void SetDashes( int number_of_dashes, const wxDash *dash );
-
-    wxColour &GetColour() const;
-    int GetCap() const;
-    int GetJoin() const;
-    int GetStyle() const;
-    int GetWidth() const;
-    int GetDashes(wxDash **ptr) const;
+    wxColour GetColour() const wxOVERRIDE;
+    wxPenCap GetCap() const wxOVERRIDE;
+    wxPenJoin GetJoin() const wxOVERRIDE;
+    wxPenStyle GetStyle() const wxOVERRIDE;
+    int GetWidth() const wxOVERRIDE;
+    int GetDashes(wxDash **ptr) const wxOVERRIDE;
     int GetDashCount() const;
     wxDash* GetDash() const;
+    wxBitmap *GetStipple() const wxOVERRIDE;
+
+
+    wxDEPRECATED_MSG("use wxPENSTYLE_XXX constants")
+    wxPen(const wxColour& col, int width, int style);
+
+    wxDEPRECATED_MSG("use wxPENSTYLE_XXX constants")
+    void SetStyle(int style) { SetStyle((wxPenStyle)style); }
 
 protected:
-    // ref counting code
-    virtual wxObjectRefData *CreateRefData() const;
-    virtual wxObjectRefData *CloneRefData(const wxObjectRefData *data) const;
+    virtual wxGDIRefData *CreateGDIRefData() const wxOVERRIDE;
+    virtual wxGDIRefData *CloneGDIRefData(const wxGDIRefData *data) const wxOVERRIDE;
 
-    DECLARE_DYNAMIC_CLASS(wxPen)
+    wxDECLARE_DYNAMIC_CLASS(wxPen);
 };
 
 #endif // _WX_GTK_PEN_H_

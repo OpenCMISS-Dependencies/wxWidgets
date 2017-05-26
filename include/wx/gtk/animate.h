@@ -4,7 +4,6 @@
 // Author:      Julian Smart and Guillermo Rodriguez Garcia
 // Modified by: Francesco Montorsi
 // Created:     13/8/99
-// RCS-ID:      $Id: animate.h 58350 2009-01-24 10:00:38Z FM $
 // Copyright:   (c) Julian Smart and Guillermo Rodriguez Garcia
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -27,33 +26,31 @@ typedef struct _GdkPixbufAnimationIter GdkPixbufAnimationIter;
 class WXDLLIMPEXP_ADV wxAnimation : public wxAnimationBase
 {
 public:
-#if wxABI_VERSION >= 20810
     wxAnimation(const wxString &name, wxAnimationType type = wxANIMATION_TYPE_ANY)
         : m_pixbuf(NULL) { LoadFile(name, type); }
-#endif
     wxAnimation(GdkPixbufAnimation *p = NULL);
     wxAnimation(const wxAnimation&);
     ~wxAnimation() { UnRef(); }
 
     wxAnimation& operator= (const wxAnimation&);
 
-    virtual bool IsOk() const
+    virtual bool IsOk() const wxOVERRIDE
         { return m_pixbuf != NULL; }
 
 
     // unfortunately GdkPixbufAnimation does not expose these info:
 
-    virtual unsigned int GetFrameCount() const { return 0; }
-    virtual wxImage GetFrame(unsigned int frame) const;
+    virtual unsigned int GetFrameCount() const wxOVERRIDE { return 0; }
+    virtual wxImage GetFrame(unsigned int frame) const wxOVERRIDE;
 
     // we can retrieve the delay for a frame only after building
     // a GdkPixbufAnimationIter...
-    virtual int GetDelay(unsigned int WXUNUSED(frame)) const { return 0; }
+    virtual int GetDelay(unsigned int WXUNUSED(frame)) const wxOVERRIDE { return 0; }
 
-    virtual wxSize GetSize() const;
+    virtual wxSize GetSize() const wxOVERRIDE;
 
-    virtual bool LoadFile(const wxString &name, wxAnimationType type = wxANIMATION_TYPE_ANY);
-    virtual bool Load(wxInputStream &stream, wxAnimationType type = wxANIMATION_TYPE_ANY);
+    virtual bool LoadFile(const wxString &name, wxAnimationType type = wxANIMATION_TYPE_ANY) wxOVERRIDE;
+    virtual bool Load(wxInputStream &stream, wxAnimationType type = wxANIMATION_TYPE_ANY) wxOVERRIDE;
 
     // Implementation
 public:     // used by GTK callbacks
@@ -69,7 +66,7 @@ private:
     void UnRef();
 
     typedef wxAnimationBase base_type;
-    DECLARE_DYNAMIC_CLASS(wxAnimation)
+    wxDECLARE_DYNAMIC_CLASS(wxAnimation);
 };
 
 
@@ -97,8 +94,6 @@ public:
         Create(parent, id, anim, pos, size, style, name);
     }
 
-    void Init();
-
     bool Create(wxWindow *parent, wxWindowID id,
                 const wxAnimation& anim = wxNullAnimation,
                 const wxPoint& pos = wxDefaultPosition,
@@ -114,23 +109,24 @@ public:     // event handler
 
 public:     // public API
 
-    virtual bool LoadFile(const wxString& filename, wxAnimationType type = wxANIMATION_TYPE_ANY);
+    virtual bool LoadFile(const wxString& filename, wxAnimationType type = wxANIMATION_TYPE_ANY) wxOVERRIDE;
+    virtual bool Load(wxInputStream& stream, wxAnimationType type = wxANIMATION_TYPE_ANY) wxOVERRIDE;
 
-    virtual void SetAnimation(const wxAnimation &anim);
-    virtual wxAnimation GetAnimation() const
+    virtual void SetAnimation(const wxAnimation &anim) wxOVERRIDE;
+    virtual wxAnimation GetAnimation() const wxOVERRIDE
         { return wxAnimation(m_anim); }
 
-    virtual bool Play();
-    virtual void Stop();
+    virtual bool Play() wxOVERRIDE;
+    virtual void Stop() wxOVERRIDE;
 
-    virtual bool IsPlaying() const;
+    virtual bool IsPlaying() const wxOVERRIDE;
 
-    bool SetBackgroundColour( const wxColour &colour );
+    bool SetBackgroundColour( const wxColour &colour ) wxOVERRIDE;
 
 protected:
 
-    virtual void DisplayStaticImage();
-    virtual wxSize DoGetBestSize() const;
+    virtual void DisplayStaticImage() wxOVERRIDE;
+    virtual wxSize DoGetBestSize() const wxOVERRIDE;
     void FitToAnimation();
     void ClearToBackgroundColour();
 
@@ -147,8 +143,11 @@ protected:      // internal vars
 
 private:
     typedef wxAnimationCtrlBase base_type;
-    DECLARE_DYNAMIC_CLASS(wxAnimationCtrl)
-    DECLARE_EVENT_TABLE()
+
+    void Init();
+
+    wxDECLARE_DYNAMIC_CLASS(wxAnimationCtrl);
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif // _WX_GTKANIMATEH__

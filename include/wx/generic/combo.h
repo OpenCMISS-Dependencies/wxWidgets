@@ -4,7 +4,6 @@
 // Author:      Jaakko Salli
 // Modified by:
 // Created:     Apr-30-2006
-// RCS-ID:      $Id: combo.h 41835 2006-10-09 20:12:19Z RR $
 // Copyright:   (c) Jaakko Salli
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
@@ -26,14 +25,16 @@
 // all actions of single line text controls are supported
 
 // popup/dismiss the choice window
-#define wxACTION_COMBOBOX_POPUP     _T("popup")
-#define wxACTION_COMBOBOX_DISMISS   _T("dismiss")
+#define wxACTION_COMBOBOX_POPUP     wxT("popup")
+#define wxACTION_COMBOBOX_DISMISS   wxT("dismiss")
 
 #endif
 
-extern WXDLLIMPEXP_DATA_CORE(const wxChar) wxComboBoxNameStr[];
+#include "wx/dcbuffer.h"
 
-class WXDLLEXPORT wxGenericComboCtrl : public wxComboCtrlBase
+extern WXDLLIMPEXP_DATA_CORE(const char) wxComboBoxNameStr[];
+
+class WXDLLIMPEXP_CORE wxGenericComboCtrl : public wxComboCtrlBase
 {
 public:
     // ctors and such
@@ -67,7 +68,7 @@ public:
 
     void SetCustomPaintWidth( int width );
 
-    virtual bool IsKeyPopupToggle(const wxKeyEvent& event) const;
+    virtual bool IsKeyPopupToggle(const wxKeyEvent& event) const wxOVERRIDE;
 
     static int GetFeatures() { return wxComboCtrlFeatures::All; }
 
@@ -80,8 +81,37 @@ public:
 
 protected:
 
+    // Dummies for platform-specific wxTextEntry implementations
+#if defined(__WXUNIVERSAL__)
+    // Looks like there's nothing we need to override here
+#elif defined(__WXMOTIF__)
+    virtual WXWidget GetTextWidget() const { return NULL; }
+#elif defined(__WXGTK__)
+#if defined(__WXGTK20__)
+    virtual GtkEditable *GetEditable() const wxOVERRIDE { return NULL; }
+    virtual GtkEntry *GetEntry() const wxOVERRIDE { return NULL; }
+#endif
+#elif defined(__WXMAC__)
+    // Looks like there's nothing we need to override here
+#endif
+
+    // For better transparent background rendering
+    virtual bool HasTransparentBackground() wxOVERRIDE
+    {
+        #if wxALWAYS_NATIVE_DOUBLE_BUFFER
+          #ifdef __WXGTK__
+            // Sanity check for GTK+
+            return IsDoubleBuffered();
+          #else
+            return true;
+          #endif
+        #else
+            return false;
+        #endif
+    }
+
     // Mandatory virtuals
-    virtual void OnResize();
+    virtual void OnResize() wxOVERRIDE;
 
     // Event handlers
     void OnPaintEvent( wxPaintEvent& event );
@@ -90,9 +120,9 @@ protected:
 private:
     void Init();
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 
-    DECLARE_DYNAMIC_CLASS(wxGenericComboCtrl)
+    wxDECLARE_DYNAMIC_CLASS(wxGenericComboCtrl);
 };
 
 
@@ -101,7 +131,7 @@ private:
 // If native wxComboCtrl was not defined, then prepare a simple
 // front-end so that wxRTTI works as expected.
 
-class WXDLLEXPORT wxComboCtrl : public wxGenericComboCtrl
+class WXDLLIMPEXP_CORE wxComboCtrl : public wxGenericComboCtrl
 {
 public:
     wxComboCtrl() : wxGenericComboCtrl() {}
@@ -124,7 +154,7 @@ public:
 protected:
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxComboCtrl)
+    wxDECLARE_DYNAMIC_CLASS(wxComboCtrl);
 };
 
 #endif // _WX_COMBOCONTROL_H_

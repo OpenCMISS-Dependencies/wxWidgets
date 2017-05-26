@@ -4,7 +4,6 @@
 // Author:      Francesco Montorsi
 // Modified by:
 // Created:     15/04/2006
-// RCS-ID:      $Id: fontpickercmn.cpp 42999 2006-11-03 21:54:13Z VZ $
 // Copyright:   (c) Francesco Montorsi
 // Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,18 +38,16 @@
 // implementation
 // ============================================================================
 
-const wxChar wxFontPickerCtrlNameStr[] = wxT("fontpicker");
-const wxChar wxFontPickerWidgetNameStr[] = wxT("fontpickerwidget");
+const char wxFontPickerCtrlNameStr[] = "fontpicker";
+const char wxFontPickerWidgetNameStr[] = "fontpickerwidget";
 
-DEFINE_EVENT_TYPE(wxEVT_COMMAND_FONTPICKER_CHANGED)
-IMPLEMENT_DYNAMIC_CLASS(wxFontPickerCtrl, wxPickerBase)
-IMPLEMENT_DYNAMIC_CLASS(wxFontPickerEvent, wxCommandEvent)
+wxDEFINE_EVENT(wxEVT_FONTPICKER_CHANGED, wxFontPickerEvent);
+wxIMPLEMENT_DYNAMIC_CLASS(wxFontPickerCtrl, wxPickerBase);
+wxIMPLEMENT_DYNAMIC_CLASS(wxFontPickerEvent, wxCommandEvent);
 
 // ----------------------------------------------------------------------------
 // wxFontPickerCtrl
 // ----------------------------------------------------------------------------
-
-#define M_PICKER     ((wxFontPickerWidget*)m_picker)
 
 bool wxFontPickerCtrl::Create( wxWindow *parent, wxWindowID id,
                         const wxFont &initial,
@@ -71,7 +68,7 @@ bool wxFontPickerCtrl::Create( wxWindow *parent, wxWindowID id,
     // complete sizer creation
     wxPickerBase::PostCreation();
 
-    m_picker->Connect(wxEVT_COMMAND_FONTPICKER_CHANGED,
+    m_picker->Connect(wxEVT_FONTPICKER_CHANGED,
             wxFontPickerEventHandler(wxFontPickerCtrl::OnFontChange),
             NULL, this);
 
@@ -117,7 +114,7 @@ wxFont wxFontPickerCtrl::String2Font(const wxString &s)
 
 void wxFontPickerCtrl::SetSelectedFont(const wxFont &f)
 {
-    M_PICKER->SetSelectedFont(f);
+    GetPickerWidget()->SetSelectedFont(f);
     UpdateTextCtrlFromPicker();
 }
 
@@ -125,24 +122,17 @@ void wxFontPickerCtrl::UpdatePickerFromTextCtrl()
 {
     wxASSERT(m_text);
 
-    if (m_bIgnoreNextTextCtrlUpdate)
-    {
-        // ignore this update
-        m_bIgnoreNextTextCtrlUpdate = false;
-        return;
-    }
-
     // NB: we don't use the wxFont::wxFont(const wxString &) constructor
     //     since that constructor expects the native font description
     //     string returned by wxFont::GetNativeFontInfoDesc() and not
     //     the user-friendly one returned by wxFont::GetNativeFontInfoUserDesc()
     wxFont f = String2Font(m_text->GetValue());
-    if (!f.Ok())
+    if (!f.IsOk())
         return;     // invalid user input
 
-    if (M_PICKER->GetSelectedFont() != f)
+    if (GetPickerWidget()->GetSelectedFont() != f)
     {
-        M_PICKER->SetSelectedFont(f);
+        GetPickerWidget()->SetSelectedFont(f);
 
         // fire an event
         wxFontPickerEvent event(this, GetId(), f);
@@ -155,11 +145,9 @@ void wxFontPickerCtrl::UpdateTextCtrlFromPicker()
     if (!m_text)
         return;     // no textctrl to update
 
-    // NOTE: this SetValue() will generate an unwanted wxEVT_COMMAND_TEXT_UPDATED
-    //       which will trigger a unneeded UpdateFromTextCtrl(); thus before using
-    //       SetValue() we set the m_bIgnoreNextTextCtrlUpdate flag...
-    m_bIgnoreNextTextCtrlUpdate = true;
-    m_text->SetValue(Font2String(M_PICKER->GetSelectedFont()));
+    // Take care to use ChangeValue() here and not SetValue() to avoid
+    // infinite recursion.
+    m_text->ChangeValue(Font2String(GetPickerWidget()->GetSelectedFont()));
 }
 
 

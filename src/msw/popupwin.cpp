@@ -4,9 +4,8 @@
 // Author:      Vadim Zeitlin
 // Modified by:
 // Created:     08.05.02
-// RCS-ID:      $Id: popupwin.cpp 38791 2006-04-18 09:56:17Z ABX $
 // Copyright:   (c) 2002 Vadim Zeitlin <zeitlin@dptmaths.ens-cachan.fr>
-// License:     wxWindows licence
+// Licence:     wxWindows licence
 ///////////////////////////////////////////////////////////////////////////////
 
 // ============================================================================
@@ -48,16 +47,6 @@ bool wxPopupWindow::Create(wxWindow *parent, int flags)
                                 flags | wxPOPUP_WINDOW);
 }
 
-void wxPopupWindow::DoGetPosition(int *x, int *y) const
-{
-    // the position of a "top level" window such as this should be in
-    // screen coordinates, not in the client ones which MSW gives us
-    // (because we are a child window)
-    wxPopupWindowBase::DoGetPosition(x, y);
-
-    GetParent()->ClientToScreen(x, y);
-}
-
 WXDWORD wxPopupWindow::MSWGetStyle(long flags, WXDWORD *exstyle) const
 {
     // we only honour the border flags, the others don't make sense for us
@@ -81,13 +70,16 @@ WXHWND wxPopupWindow::MSWGetParent() const
     //     WS_CHILD but then showing a popup would deactivate the parent which
     //     is ugly and working around this, although possible, is even more
     //     ugly
-    // GetDesktopWindow() is not always supported on WinCE, and if
-    // it is, it often returns NULL.
-#ifdef __WXWINCE__
-    return 0;
-#else
     return (WXHWND)::GetDesktopWindow();
-#endif
+}
+
+void wxPopupWindow::SetFocus()
+{
+    // Focusing on a popup window does not work on MSW unless WS_POPUP style is
+    // set (which is never the case currently, see the note in MSWGetParent()).
+    // We do not even want to try to set the focus, as it returns an error from
+    // SetFocus() on recent Windows versions (since Vista) and the resulting
+    // debug message is annoying.
 }
 
 bool wxPopupWindow::Show(bool show)
@@ -100,7 +92,7 @@ bool wxPopupWindow::Show(bool show)
         // raise to top of z order
         if (!::SetWindowPos(GetHwnd(), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE))
         {
-            wxLogLastError(_T("SetWindowPos"));
+            wxLogLastError(wxT("SetWindowPos"));
         }
 
         // and set it as the foreground window so the mouse can be captured

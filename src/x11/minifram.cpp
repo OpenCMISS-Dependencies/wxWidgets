@@ -1,12 +1,11 @@
 /////////////////////////////////////////////////////////////////////////////
-// Name:        minifram.cpp
+// Name:        src/x11/minifram.cpp
 // Purpose:     wxMiniFrame. Optional; identical to wxFrame if not supported.
 // Author:      Julian Smart
 // Modified by:
 // Created:     17/09/98
-// RCS-ID:      $Id: minifram.cpp 49299 2007-10-21 18:07:29Z PC $
 // Copyright:   (c) Julian Smart
-// Licence:   	wxWindows licence
+// Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
 #include "wx/wxprec.h"
@@ -15,6 +14,6 @@
 
 #include "wx/minifram.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxMiniFrame, wxFrame)
+wxIMPLEMENT_DYNAMIC_CLASS(wxMiniFrame, wxFrame);
 
 #endif // wxUSE_MINIFRAME

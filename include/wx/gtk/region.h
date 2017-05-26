@@ -2,13 +2,16 @@
 // Name:        wx/gtk/region.h
 // Purpose:
 // Author:      Robert Roebling
-// Id:          $Id: region.h 42873 2006-10-31 22:48:38Z RR $
 // Copyright:   (c) 1998 Robert Roebling
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef _WX_GTK_REGION_H_
 #define _WX_GTK_REGION_H_
+
+#ifdef __WXGTK3__
+typedef struct _cairo_region cairo_region_t;
+#endif
 
 // ----------------------------------------------------------------------------
 // wxRegion
@@ -35,8 +38,10 @@ public:
         InitRect(rect.x, rect.y, rect.width, rect.height);
     }
 
-    wxRegion( size_t n, const wxPoint *points, int fillStyle = wxODDEVEN_RULE );
+    wxRegion( size_t n, const wxPoint *points,
+              wxPolygonFillMode fillStyle = wxODDEVEN_RULE );
 
+#if wxUSE_IMAGE
     wxRegion( const wxBitmap& bmp)
     {
         Union(bmp);
@@ -46,43 +51,43 @@ public:
     {
         Union(bmp, transColour, tolerance);
     }
+#endif // wxUSE_IMAGE
 
     virtual ~wxRegion();
 
     // wxRegionBase methods
-    virtual void Clear();
-    virtual bool IsEmpty() const;
+    virtual void Clear() wxOVERRIDE;
+    virtual bool IsEmpty() const wxOVERRIDE;
 
-public:
-    // Init with GdkRegion, set ref count to 2 so that
-    // the C++ class will not destroy the region!
-    wxRegion( GdkRegion *region );
-
+#ifdef __WXGTK3__
+    cairo_region_t* GetRegion() const;
+#else
+    wxRegion(const GdkRegion* region);
     GdkRegion *GetRegion() const;
+#endif
 
 protected:
-    // ref counting code
-    virtual wxObjectRefData *CreateRefData() const;
-    virtual wxObjectRefData *CloneRefData(const wxObjectRefData *data) const;
+    virtual wxGDIRefData *CreateGDIRefData() const wxOVERRIDE;
+    virtual wxGDIRefData *CloneGDIRefData(const wxGDIRefData *data) const wxOVERRIDE;
 
     // wxRegionBase pure virtuals
-    virtual bool DoIsEqual(const wxRegion& region) const;
-    virtual bool DoGetBox(wxCoord& x, wxCoord& y, wxCoord& w, wxCoord& h) const;
-    virtual wxRegionContain DoContainsPoint(wxCoord x, wxCoord y) const;
-    virtual wxRegionContain DoContainsRect(const wxRect& rect) const;
+    virtual bool DoIsEqual(const wxRegion& region) const wxOVERRIDE;
+    virtual bool DoGetBox(wxCoord& x, wxCoord& y, wxCoord& w, wxCoord& h) const wxOVERRIDE;
+    virtual wxRegionContain DoContainsPoint(wxCoord x, wxCoord y) const wxOVERRIDE;
+    virtual wxRegionContain DoContainsRect(const wxRect& rect) const wxOVERRIDE;
 
-    virtual bool DoOffset(wxCoord x, wxCoord y);
-    virtual bool DoUnionWithRect(const wxRect& rect);
-    virtual bool DoUnionWithRegion(const wxRegion& region);
-    virtual bool DoIntersect(const wxRegion& region);
-    virtual bool DoSubtract(const wxRegion& region);
-    virtual bool DoXor(const wxRegion& region);
+    virtual bool DoOffset(wxCoord x, wxCoord y) wxOVERRIDE;
+    virtual bool DoUnionWithRect(const wxRect& rect) wxOVERRIDE;
+    virtual bool DoUnionWithRegion(const wxRegion& region) wxOVERRIDE;
+    virtual bool DoIntersect(const wxRegion& region) wxOVERRIDE;
+    virtual bool DoSubtract(const wxRegion& region) wxOVERRIDE;
+    virtual bool DoXor(const wxRegion& region) wxOVERRIDE;
 
     // common part of ctors for a rectangle region
     void InitRect(wxCoord x, wxCoord y, wxCoord w, wxCoord h);
 
 private:
-    DECLARE_DYNAMIC_CLASS(wxRegion)
+    wxDECLARE_DYNAMIC_CLASS(wxRegion);
 };
 
 // ----------------------------------------------------------------------------
@@ -120,14 +125,12 @@ private:
     void Init();
     void CreateRects( const wxRegion& r );
 
-    size_t   m_current;
     wxRegion m_region;
-
     wxRect *m_rects;
-    size_t  m_numRects;
+    int m_numRects;
+    int m_current;
 
-private:
-    DECLARE_DYNAMIC_CLASS(wxRegionIterator)
+    wxDECLARE_DYNAMIC_CLASS(wxRegionIterator);
 };
 
 

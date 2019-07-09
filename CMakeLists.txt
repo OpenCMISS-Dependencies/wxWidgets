@@ -37,6 +37,8 @@
 
 # Set the minimum version of cmake required to 2.6
 CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
+cmake_policy(SET CMP0043 OLD)
+cmake_policy(SET CMP0077 OLD)
 
 PROJECT( wxWidgets )
 

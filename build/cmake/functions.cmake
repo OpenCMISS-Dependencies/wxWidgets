@@ -231,8 +231,10 @@ function(wx_set_target_properties target_name is_base)
     target_include_directories(${target_name}
         BEFORE
         PUBLIC
-            ${wxSETUP_HEADER_PATH}
-            ${wxSOURCE_DIR}/include
+            $<BUILD_INTERFACE:${wxSETUP_HEADER_PATH}>
+            $<BUILD_INTERFACE:${wxSOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}>
+            $<INSTALL_INTERFACE:include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}/${wxBUILD_FILE_ID}>
         )
 
     if(wxTOOLKIT_INCLUDE_DIRS)
@@ -302,6 +304,12 @@ function(wx_set_target_properties target_name is_base)
     wx_set_common_target_properties(${target_name})
 endfunction()
 
+set(wxTHIRD_PARTY_DEPENDENCIES)
+
+macro(wx_add_third_party_dependency name)
+  list(APPEND wxTHIRD_PARTY_DEPENDENCIES ${name})
+endmacro()
+
 # List of libraries added via wx_add_library() to use for wx-config
 set(wxLIB_TARGETS)
 
@@ -338,6 +346,7 @@ macro(wx_add_library name)
 
         # Setup install
         wx_install(TARGETS ${name}
+            EXPORT ${wxWidgets_EXPORT_SET_NAME}
             LIBRARY DESTINATION "lib${wxPLATFORM_LIB_DIR}"
             ARCHIVE DESTINATION "lib${wxPLATFORM_LIB_DIR}"
             RUNTIME DESTINATION "lib${wxPLATFORM_LIB_DIR}"
@@ -487,14 +496,14 @@ function(wx_set_builtin_target_properties target_name)
     target_include_directories(${target_name}
         BEFORE
         PUBLIC
-            ${wxSETUP_HEADER_PATH}
+            $<BUILD_INTERFACE:${wxSETUP_HEADER_PATH}>
         )
 
     set_target_properties(${target_name} PROPERTIES FOLDER "Third Party Libraries")
 
     wx_set_common_target_properties(${target_name} DEFAULT_WARNINGS)
     if(NOT wxBUILD_SHARED)
-        wx_install(TARGETS ${name} ARCHIVE DESTINATION "lib${wxPLATFORM_LIB_DIR}")
+        wx_install(TARGETS ${name} EXPORT ${wxWidgets_EXPORT_SET_NAME} ARCHIVE DESTINATION "lib${wxPLATFORM_LIB_DIR}")
     endif()
 endfunction()
 
@@ -547,6 +556,7 @@ function(wx_add_thirdparty_library var_name lib_name help_str)
     if(${var_name} STREQUAL "builtin" AND NOT wxBUILD_SHARED)
         # Only install if we build as static libraries
         wx_install(TARGETS ${target_name}
+            EXPORT ${wxWidgets_EXPORT_SET_NAME}
             LIBRARY DESTINATION lib
             ARCHIVE DESTINATION lib
             )

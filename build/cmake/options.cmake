@@ -87,14 +87,12 @@ wx_option(wxUSE_REPRODUCIBLE_BUILD "enable reproducable build" OFF)
 # ---------------------------------------------------------------------------
 # external libraries
 # ---------------------------------------------------------------------------
-
 wx_add_thirdparty_library(wxUSE_REGEX REGEX "enable support for wxRegEx class" DEFAULT builtin)
 wx_add_thirdparty_library(wxUSE_ZLIB ZLIB "use zlib for LZW compression" DEFAULT_APPLE sys)
 wx_add_thirdparty_library(wxUSE_EXPAT EXPAT "use expat for XML parsing" DEFAULT_APPLE sys)
 wx_add_thirdparty_library(wxUSE_LIBJPEG JPEG "use libjpeg (JPEG file format)")
 wx_add_thirdparty_library(wxUSE_LIBPNG PNG "use libpng (PNG image format)")
 wx_add_thirdparty_library(wxUSE_LIBTIFF TIFF "use libtiff (TIFF file format)")
-
 wx_option(wxUSE_LIBLZMA "use LZMA compression" OFF)
 set(wxTHIRD_PARTY_LIBRARIES ${wxTHIRD_PARTY_LIBRARIES} wxUSE_LIBLZMA "use liblzma for LZMA compression")
 

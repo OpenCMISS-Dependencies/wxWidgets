@@ -34,5 +34,11 @@ if(wxUSE_ZLIB STREQUAL "builtin")
     set(ZLIB_LIBRARIES wxzlib)
     set(ZLIB_INCLUDE_DIRS ${wxSOURCE_DIR}/src/zlib)
 elseif(wxUSE_ZLIB)
+    # Because OpenCMISS doesn't (yet) place the CMake config files in a pre-defined
+    # location we have to manually add it. Technically only required for non-WIN32
+    # but we will just add it for everybody as it does no harm. (This is the same for
+    # tiff, png, and jpeg.)
+    find_package(ZLIB CONFIG PATH_SUFFIXES cmake)
     find_package(ZLIB REQUIRED)
+    wx_add_third_party_dependency(ZLIB)
 endif()

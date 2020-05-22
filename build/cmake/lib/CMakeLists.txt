@@ -104,3 +104,4 @@ endif()
 
 # Propagate variable(s) to parent scope
 set(wxLIB_TARGETS ${wxLIB_TARGETS} PARENT_SCOPE)
+set(wxTHIRD_PARTY_DEPENDENCIES ${wxTHIRD_PARTY_DEPENDENCIES} PARENT_SCOPE)

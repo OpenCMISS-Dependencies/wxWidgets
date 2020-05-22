@@ -33,23 +33,17 @@ if(MSVC)
 else()
     wx_install(
         DIRECTORY "${wxSETUP_HEADER_PATH}"
-        DESTINATION "lib/wx/include")
+        DESTINATION "include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}")
 
     wx_install(
         FILES "${wxOUTPUT_DIR}/wx/config/${wxBUILD_FILE_ID}"
-        DESTINATION "lib/wx/config"
+        DESTINATION "include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}/wx/config"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
                     GROUP_EXECUTE GROUP_READ
                     WORLD_EXECUTE WORLD_READ
         )
 
-    install(DIRECTORY DESTINATION "bin")
-    install(CODE "execute_process( \
-        COMMAND ${CMAKE_COMMAND} -E create_symlink \
-        ${CMAKE_INSTALL_PREFIX}/lib/wx/config/${wxBUILD_FILE_ID} \
-        ${CMAKE_INSTALL_PREFIX}/bin/wx-config \
-        )"
-    )
+#    install(DIRECTORY DESTINATION "bin")
 endif()
 
 # uninstall target

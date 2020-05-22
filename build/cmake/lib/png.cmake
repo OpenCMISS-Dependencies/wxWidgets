@@ -52,5 +52,11 @@ if(wxUSE_LIBPNG STREQUAL "builtin")
     set(PNG_LIBRARIES wxpng)
     set(PNG_INCLUDE_DIRS ${wxSOURCE_DIR}/src/png)
 elseif(wxUSE_LIBPNG)
+    # Because OpenCMISS doesn't (yet) place the CMake config files in a pre-defined
+    # location we have to manually add it. Technically only required for non-WIN32
+    # but we will just add it for everybody as it does no harm. (This is the same for
+    # tiff, zlib, and jpeg.)
+    find_package(PNG CONFIG PATH_SUFFIXES cmake)
     find_package(PNG REQUIRED)
+    wx_add_third_party_dependency(PNG)
 endif()

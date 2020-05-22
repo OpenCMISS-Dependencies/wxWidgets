@@ -18,20 +18,14 @@ if(wxUSE_XRC)
     endif()
     wx_exe_link_libraries(wxrc base)
 
-    set_target_properties(wxrc PROPERTIES FOLDER "Utilities")
+    set_target_properties(wxrc PROPERTIES FOLDER "Utilities" OUTPUT_NAME wxrc-${wxMAJOR_VERSION}.${wxMINOR_VERSION})
 
-    wx_install(TARGETS wxrc RUNTIME DESTINATION "bin")
+    wx_install(TARGETS wxrc EXPORT ${wxWidgets_EXPORT_SET_NAME} RUNTIME DESTINATION bin)
     if(NOT MSVC)
         install(CODE "execute_process( \
-            COMMAND ${CMAKE_COMMAND} -E rename \
-            ${CMAKE_INSTALL_PREFIX}/bin/wxrc${CMAKE_EXECUTABLE_SUFFIX} \
-            ${CMAKE_INSTALL_PREFIX}/bin/wxrc-${wxMAJOR_VERSION}.${wxMINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX} \
-            )"
-        )
-        install(CODE "execute_process( \
             COMMAND ${CMAKE_COMMAND} -E create_symlink \
-            ${CMAKE_INSTALL_PREFIX}/bin/wxrc-${wxMAJOR_VERSION}.${wxMINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX} \
-            ${CMAKE_INSTALL_PREFIX}/bin/wxrc${CMAKE_EXECUTABLE_SUFFIX} \
+            ${wxINSTALL_PREFIX}/bin/wxrc-${wxMAJOR_VERSION}.${wxMINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX} \
+            ${wxINSTALL_PREFIX}/bin/wxrc${CMAKE_EXECUTABLE_SUFFIX} \
             )"
         )
     endif()

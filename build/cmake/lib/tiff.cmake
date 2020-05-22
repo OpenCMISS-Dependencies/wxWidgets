@@ -80,5 +80,11 @@ if(wxUSE_LIBTIFF STREQUAL "builtin")
     set(TIFF_LIBRARIES wxtiff)
     set(TIFF_INCLUDE_DIRS ${wxSOURCE_DIR}/src/tiff/libtiff)
 elseif(wxUSE_LIBTIFF)
+    # Because OpenCMISS doesn't (yet) place the CMake config files in a pre-defined
+    # location we have to manually add it. Technically only required for non-WIN32
+    # but we will just add it for everybody as it does no harm. (This is the same for
+    # zlib, png, and jpeg.)
+    find_package(TIFF CONFIG PATH_SUFFIXES cmake)
     find_package(TIFF REQUIRED)
+    wx_add_third_party_dependency(TIFF)
 endif()

@@ -62,6 +62,25 @@ elseif(APPLE AND NOT IPHONE)
     endif()
 endif()
 
+set(DEPENDENCY_CONTENT)
+foreach(_DEP ${wxTHIRD_PARTY_DEPENDENCIES})
+  if(${_DEP}_DIR)
+    set(DEPENDENCY_CONTENT "${DEPENDENCY_CONTENT}\nset(${_DEP}_DIR ${${_DEP}_DIR})\nfind_dependency(${_DEP} CONFIG)\n")
+  else()
+    set(DEPENDENCY_CONTENT "${DEPENDENCY_CONTENT}\nfind_dependency(${_DEP})\n")
+  endif()
+endforeach()
+
+set(wxCONFIGURED_CONFIG_CMAKE ${wxBINARY_DIR}/build/cmake/wxwidgets-config.cmake)
+configure_file(${wxSOURCE_DIR}/build/cmake/wxwidgets-config.in.cmake ${wxCONFIGURED_CONFIG_CMAKE} @ONLY)
+set(wxCONFIGURED_CONFIG_DEPENDENCIES_CMAKE ${wxBINARY_DIR}/build/cmake/wxwidgets-config-dependencies.cmake)
+configure_file(${wxSOURCE_DIR}/build/cmake/wxwidgets-config-dependencies.in.cmake ${wxCONFIGURED_CONFIG_DEPENDENCIES_CMAKE} @ONLY)
+wx_install(FILES ${wxCONFIGURED_CONFIG_CMAKE} ${wxCONFIGURED_CONFIG_DEPENDENCIES_CMAKE} DESTINATION ${wxPACKAGE_CONFIG_DIR})
+wx_install(EXPORT ${wxWidgets_EXPORT_SET_NAME}
+  NAMESPACE wxWidgets::
+  DESTINATION ${wxPACKAGE_CONFIG_DIR}
+  COMPONENT Development)
+
 # Print configuration summary
 wx_print_thirdparty_library_summary()
 

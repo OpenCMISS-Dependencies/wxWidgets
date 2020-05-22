@@ -92,7 +92,7 @@ if(WXGTK AND wxUSE_WEBVIEW_WEBKIT2)
         ${WEBKIT2_LIBRARIES}
         )
 
-    wx_install(TARGETS webkit2_ext LIBRARY DESTINATION ${WX_WEB_EXTENSIONS_DIRECTORY})
+    wx_install(TARGETS webkit2_ext EXPORT ${wxWidgets_EXPORT_SET_NAME} LIBRARY DESTINATION ${WX_WEB_EXTENSIONS_DIRECTORY})
 
     add_dependencies(webview webkit2_ext)
 endif()

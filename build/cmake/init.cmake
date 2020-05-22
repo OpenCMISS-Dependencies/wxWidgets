@@ -8,6 +8,14 @@
 # Licence:     wxWindows licence
 #############################################################################
 
+string(TOUPPER ${PROJECT_NAME} UPPER_PROJECT_NAME)
+
+if(IS_ABSOLUTE CMAKE_INSTALL_PREFIX)
+    set(wxINSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+else()
+    get_filename_component(wxINSTALL_PREFIX "${wxSOURCE_DIR}/${CMAKE_INSTALL_PREFIX}" REALPATH)
+endif()
+
 if(DEFINED wxBUILD_CXX_STANDARD AND NOT wxBUILD_CXX_STANDARD STREQUAL COMPILER_DEFAULT)
     set(CMAKE_CXX_STANDARD ${wxBUILD_CXX_STANDARD})
 endif()
@@ -187,8 +195,8 @@ else()
         set(wxSETUP_HEADER_FILE_DEBUG ${wxSETUP_HEADER_PATH}d/wx/setup.h)
     else()
         set(wxSETUP_HEADER_PATH
-            ${wxOUTPUT_DIR}/wx/include/${wxBUILD_FILE_ID})
-        file(MAKE_DIRECTORY ${wxSETUP_HEADER_PATH}/wx)
+            ${wxBINARY_DIR}/include/wx/${wxBUILD_FILE_ID})
+        file(MAKE_DIRECTORY ${wxSETUP_HEADER_PATH})
     endif()
 endif()
 set(wxSETUP_HEADER_FILE ${wxSETUP_HEADER_PATH}/wx/setup.h)
@@ -530,3 +538,13 @@ if(wxUSE_GUI)
         set(wxUSE_LIBGNOMEVFS OFF)
     endif()
 endif()
+
+if(WIN32)
+  set(wxPACKAGE_CONFIG_DIR cmake)
+elseif(UNIX)
+  set(wxPACKAGE_CONFIG_DIR share/cmake/wxWidgets)
+endif()
+
+set(wxWidgets_EXPORT_SET_NAME wxWidgets-targets-${wxBUILD_FILE_ID})
+
+set(wxTHIRD_PARTY_DEPENDENCIES)

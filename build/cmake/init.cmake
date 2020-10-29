@@ -190,6 +190,7 @@ else()
         endif()
         set(wxSETUP_HEADER_PATH
             ${wxOUTPUT_DIR}/${wxCOMPILER_PREFIX}${wxARCH_SUFFIX}_${lib_suffix}/${wxBUILD_TOOLKIT}${lib_unicode})
+            message(STATUS "=== wxSETUP_HEADER_PATH: ${wxSETUP_HEADER_PATH}")
         file(MAKE_DIRECTORY ${wxSETUP_HEADER_PATH}/wx)
         file(MAKE_DIRECTORY ${wxSETUP_HEADER_PATH}d/wx)
         set(wxSETUP_HEADER_FILE_DEBUG ${wxSETUP_HEADER_PATH}d/wx/setup.h)
@@ -202,7 +203,7 @@ endif()
 set(wxSETUP_HEADER_FILE ${wxSETUP_HEADER_PATH}/wx/setup.h)
 
 if(DEFINED wxSETUP_HEADER_FILE_DEBUG)
-    # Append configuration specific suffix to setup header path
+    # Append configuration specific suffix to setup header path.
     wx_string_append(wxSETUP_HEADER_PATH "$<$<CONFIG:Debug>:d>")
 endif()
 
@@ -545,6 +546,6 @@ elseif(UNIX)
   set(wxPACKAGE_CONFIG_DIR share/cmake/wxWidgets)
 endif()
 
-set(wxWidgets_EXPORT_SET_NAME wxWidgets-targets-${wxBUILD_FILE_ID})
+set(wxWidgets_EXPORT_SET_NAME wxwidgets-targets-${wxBUILD_FILE_ID})
 
 set(wxTHIRD_PARTY_DEPENDENCIES)

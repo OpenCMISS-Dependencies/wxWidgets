@@ -228,13 +228,23 @@ function(wx_set_target_properties target_name is_base)
             )
     endif()
 
+    if (MSVC)
+        string(REPLACE "${wxOUTPUT_DIR}" "" _INSTALL_PATH ${wxSETUP_HEADER_PATH})
+        string(REPLACE "$<$<CONFIG:Debug>:d>" "" _INSTALL_PATH ${_INSTALL_PATH})
+        set(SETUP_HEADER_INSTALL_LOCATION_DEBUG $<$<CONFIG:Debug>:$<INSTALL_INTERFACE:include/wx${_INSTALL_PATH}d>>)
+        set(SETUP_HEADER_INSTALL_LOCATION_RELEASE $<$<CONFIG:Release>:$<INSTALL_INTERFACE:include/wx${_INSTALL_PATH}>>)
+    else()
+        set(SETUP_HEADER_INSTALL_LOCATION $<INSTALL_INTERFACE:include/${wxBUILD_FILE_ID}>)
+    endif()
     target_include_directories(${target_name}
         BEFORE
         PUBLIC
             $<BUILD_INTERFACE:${wxSETUP_HEADER_PATH}>
             $<BUILD_INTERFACE:${wxSOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}>
-            $<INSTALL_INTERFACE:include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}/${wxBUILD_FILE_ID}>
+            $<INSTALL_INTERFACE:include>
+            ${SETUP_HEADER_INSTALL_LOCATION}
+            ${SETUP_HEADER_INSTALL_LOCATION_DEBUG}
+            ${SETUP_HEADER_INSTALL_LOCATION_RELEASE}
         )
 
     if(wxTOOLKIT_INCLUDE_DIRS)

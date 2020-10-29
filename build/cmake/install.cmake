@@ -18,26 +18,28 @@ if(MSVC)
         DESTINATION "include")
     wx_install(
         DIRECTORY "${wxSOURCE_DIR}/include/msvc"
-        DESTINATION "include")
+        DESTINATION "include/wx")
 else()
     wx_install(
         DIRECTORY "${wxSOURCE_DIR}/include/wx"
-        DESTINATION "include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}")
+        DESTINATION "include")
 endif()
 
 # setup header and wx-config
 if(MSVC)
+    message(STATUS "[[[ wxSETUP_HEADER_PATH: ${wxSETUP_HEADER_PATH}")
+    string(REPLACE "${wxOUTPUT_DIR}" "" _INSTALL_PATH ${wxSETUP_HEADER_PATH})
     wx_install(
-        DIRECTORY "${wxSETUP_HEADER_PATH}"
-        DESTINATION "lib${wxPLATFORM_LIB_DIR}")
+        DIRECTORY "${wxSETUP_HEADER_PATH}/"
+        DESTINATION "include/wx${_INSTALL_PATH}")
 else()
     wx_install(
         DIRECTORY "${wxSETUP_HEADER_PATH}"
-        DESTINATION "include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}")
+        DESTINATION "include/wx")
 
     wx_install(
         FILES "${wxOUTPUT_DIR}/wx/config/${wxBUILD_FILE_ID}"
-        DESTINATION "include/wx-${wxMAJOR_VERSION}.${wxMINOR_VERSION}/wx/config"
+        DESTINATION "include/wx/config"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
                     GROUP_EXECUTE GROUP_READ
                     WORLD_EXECUTE WORLD_READ

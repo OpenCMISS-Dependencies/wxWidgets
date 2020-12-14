@@ -234,7 +234,7 @@ function(wx_set_target_properties target_name is_base)
         set(SETUP_HEADER_INSTALL_LOCATION_DEBUG $<$<CONFIG:Debug>:$<INSTALL_INTERFACE:include/wx${_INSTALL_PATH}d>>)
         set(SETUP_HEADER_INSTALL_LOCATION_RELEASE $<$<CONFIG:Release>:$<INSTALL_INTERFACE:include/wx${_INSTALL_PATH}>>)
     else()
-        set(SETUP_HEADER_INSTALL_LOCATION $<INSTALL_INTERFACE:include/${wxBUILD_FILE_ID}>)
+        set(SETUP_HEADER_INSTALL_LOCATION $<INSTALL_INTERFACE:include/wx/${wxBUILD_FILE_ID}>)
     endif()
     target_include_directories(${target_name}
         BEFORE
